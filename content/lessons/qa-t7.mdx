@@ -1,0 +1,59 @@
+/* lesson-meta {"topicId":"qa-t7","title":"Interview prep: scenarios & frameworks","minutes":30,"blurb":"'How would you test X?' — a structured answer beats tool trivia every time."} */
+
+QA interviews test scenario thinking: *"How would you test an elevator? A login form? A payment flow?"* A structured answer beats tool trivia every time.
+
+## The scenario framework (works for any object)
+
+1. **Clarify**: "Who uses it? What does 'working' mean — safety, speed, usability?"
+2. **Risks first**: what would hurt most if broken? (elevator: door closing on a person — not the music)
+3. **Techniques**: boundaries (weight = max+1), states (moving/open/emergency), negative inputs
+4. **Split manual vs automated**: exploratory + safety checks stay human; the 200 regression cases automate
+
+Walking an elevator answer through those four beats reciting "I know Selenium" — every time.
+
+## Framework questions, answered as tradeoffs
+
+**"Playwright or Selenium?"**
+"Playwright for new projects: auto-waiting kills most flake, the trace viewer makes failures debuggable, and cross-browser comes in one config. Selenium when the org already has a grid and 500 legacy suites — migration cost is real. I'd lead new work with Playwright and wrap legacy flows via API tests."
+
+**"Where do tests live in the pyramid?"**
+"Most at the API level — they're fast and stable. E2E covers the few money paths. Unit tests belong to the dev team; I verify they exist in CI. UI tests verify *integration*, not every math rule."
+
+## The bug war story (prepare one)
+
+A 60-second story with a shape: found it *how* (boundary analysis, not luck) → impact ("would have double-charged every annual subscriber") → the process fix you suggested. This is where you show engineering judgment, not just tool use.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Opening a 'test this login form' answer with…",
+      options: ["'I'd use Selenium'", "Clarifying questions: what counts as success? which environments? what's at risk?", "A list of 50 test cases", "The tool you know best"],
+      answer: 1,
+      why: "Interviewers score structure. Clarify → risks → techniques → automation split maps to how seniors actually think.",
+    },
+    {
+      q: "The strongest bug war story includes…",
+      options: ["How many bugs you filed total", "How your technique found it, its business impact, and the process change it caused", "The developer's name", "Only the fix"],
+      answer: 1,
+      why: "Impact + method + process improvement demonstrates engineering judgment — the thing being hired.",
+    },
+    {
+      q: "In the testing pyramid, most automated checks belong…",
+      options: ["In the UI layer", "At the API level — fast, stable, precise failure messages", "In unit tests owned by QA", "In production monitoring only"],
+      answer: 1,
+      why: "UI tests are slow and brittle; API tests catch most regressions at a fraction of the cost. E2E stays for critical journeys.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Answer 10 "test this object" questions out loud (pen, elevator, ATM, contact form) using the 4-step frame.
+2. Write a 1-page automation strategy for a mock team: what automates first and why.
+3. Mock interview with a peer; ask them to grade structure, not knowledge.
+
+## Curated resources
+
+- [Ministry of Testing](https://www.ministryoftesting.com) — Education platform · free articles
+- [Playwright docs](https://playwright.dev) — Official docs · free reference

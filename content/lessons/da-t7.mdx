@@ -1,0 +1,66 @@
+/* lesson-meta {"topicId":"da-t7","title":"Dashboards: Power BI / Looker Studio","minutes":40,"blurb":"Analysis that outlives you — a manager gets Monday-morning answers without pinging you."} */
+
+Dashboards are analysis that outlives you: the test is whether a manager gets Monday-morning answers without pinging you.
+
+## Model for BI, not for export
+
+Star-schema thinking — even in a simple tool:
+
+- **Facts**: the events (orders, sessions) — rows you aggregate
+- **Dimensions**: the slices (date, region, product) — things you group by
+
+A clean date dimension (with month/quarter columns) fixes 90% of dashboard time-trouble before it starts.
+
+## One screen, one message per visual
+
+```
+┌──────────────────────────────────────────────┐
+│ Revenue: ₹4.2Cr  ▲ +12% MoM   (the headline) │
+├──────────────┬───────────────────────────────┤
+│ Trend line   │  Top 5 regions (bar)          │
+│ (12 months)  │                               │
+├──────────────┴───────────────────────────────┤
+│ Category detail table (sortable, sparse)     │
+└──────────────────────────────────────────────┘
+```
+
+Top-left = the number the VP cares about. Every visual answers one question. Filters (date range, region) live in one consistent strip.
+
+## The refresh conversation (junior analysts forget this)
+
+A dashboard with last-quarter's data is worse than none — it lies confidently. Know and document: where the data comes from, how often it refreshes, who's alerted when the refresh fails. In Looker Studio, connect the live source (BigQuery/Sheets); in Power BI, a scheduled gateway refresh.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "A fact table contains…",
+      options: ["Region names", "The events being aggregated (orders, sessions)", "Only dates", "Dashboard layouts"],
+      answer: 1,
+      why: "Facts = measurable events; dimensions = the slices you group by. Mixing them makes every filter a hack.",
+    },
+    {
+      q: "The most important area of a dashboard is…",
+      options: ["Bottom-left (fine print)", "Top-left — the headline number/metric", "Center chart only", "The filter panel"],
+      answer: 1,
+      why: "F-pattern reading: the top-left lands first. Put the one number that decides meetings there.",
+    },
+    {
+      q: "Data freshness planning means…",
+      options: ["Assuming data is live", "Documenting source, refresh schedule, and failure alerts", "Adding a 'last updated' stamp only", "Refreshing manually weekly"],
+      answer: 1,
+      why: "Stale dashboards lie confidently. A refresh nobody monitors is a refresh that silently broke last Tuesday.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Build a one-page sales dashboard in Looker Studio (free, Google account) from a clean dataset.
+2. Add a drilldown path: region → category → product.
+3. Present it to a friend for 2 minutes. If they ask "so what?" at any visual, redesign that visual.
+
+## Curated resources
+
+- [Looker Studio help](https://support.google.com/looker-studio) — Google · free
+- [Microsoft Power BI documentation](https://learn.microsoft.com/en-us/power-bi/) — Official docs · free

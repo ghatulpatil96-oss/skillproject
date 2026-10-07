@@ -1,0 +1,85 @@
+/* lesson-meta {"topicId":"da-t3","title":"SQL from zero to joins","minutes":45,"blurb":"The analyst's superpower — one focused week to learn, a lifetime of returns."} */
+
+SQL is the analyst's superpower: it runs against every warehouse, BI tool, and interview panel. Zero to confident joins in a focused week.
+
+## The shape of every query
+
+```sql
+SELECT region, product, SUM(amount) AS revenue
+FROM sales
+WHERE sale_date >= '2026-01-01'      -- rows in
+GROUP BY region, product
+HAVING SUM(amount) > 10000           -- groups in
+ORDER BY revenue DESC
+LIMIT 20;
+```
+
+Memorize the **order of operations**: `FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER → LIMIT`. It explains why you can't use an alias in WHERE and why aggregates need HAVING.
+
+## NULLs are not values
+
+```sql
+WHERE region IS NULL          -- ✅ (region = NULL matches nothing!)
+COALESCE(region, 'Unknown')   -- default for display
+```
+
+## Joins: the daily bread
+
+```sql
+SELECT c.name, COUNT(o.id) AS orders
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id;
+```
+
+LEFT keeps customers who never ordered (COUNT(o.id) = 0). This exact question appears in most analyst interviews.
+
+## Window functions: the level-up
+
+```sql
+-- top 3 products by revenue per region
+SELECT * FROM (
+  SELECT region, product, SUM(amount) AS revenue,
+         ROW_NUMBER() OVER (PARTITION BY region ORDER BY SUM(amount) DESC) AS rn
+  FROM sales GROUP BY region, product
+) ranked
+WHERE rn <= 3;
+```
+
+Windows aggregate **without collapsing rows** — running totals, rankings, deltas all become one query.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why does WHERE region = NULL return zero rows?",
+      options: ["It doesn't", "NULL means unknown — equality with unknown is never true; use IS NULL", "WHERE can't compare text", "NULLs are excluded automatically"],
+      answer: 1,
+      why: "Three-valued logic: NULL = NULL evaluates to unknown. IS NULL is the only correct test.",
+    },
+    {
+      q: "Filter groups by an aggregate (e.g. SUM > 10000) belongs in…",
+      options: ["WHERE", "HAVING", "ORDER BY", "A subquery always"],
+      answer: 1,
+      why: "Aggregates don't exist until after GROUP BY — HAVING is the only clause that sees them.",
+    },
+    {
+      q: "LEFT JOIN customers→orders, then COUNT(*) counts…",
+      options: ["Only matched orders", "1 even for customers with no orders — use COUNT(o.id)", "All customers", "NULLs too"],
+      answer: 1,
+      why: "COUNT(*) counts rows (the customer row survives the LEFT JOIN); COUNT(o.id) skips NULL ids — zero orders reads as zero.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Complete SQLBolt lessons 1–12, then SQLZoo's joins section.
+2. Write the "top 3 products per region" query from scratch (window function).
+3. Convert one of your pivot tables into pure SQL; verify the numbers match exactly.
+
+## Curated resources
+
+- [Postgres tutorial (Neon)](https://neon.com/postgresql/tutorial) — Neon · free
+- [SQLBolt](https://sqlbolt.com) — interactive · free
+- [Mode SQL tutorial](https://mode.com/sql-tutorial/) — Education platform · free

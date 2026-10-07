@@ -1,0 +1,85 @@
+/* lesson-meta {"topicId":"be-t6","title":"SQL: joins, indexes, transactions","minutes":45,"blurb":"The most durable skill on this roadmap — databases outlive frameworks."} */
+
+SQL is the most durable skill on this roadmap — databases outlive frameworks. Joins, indexes, and transactions separate a demo from a system that survives real users.
+
+## Joins: thinking in sets
+
+```sql
+-- every job with its company name
+SELECT j.title, c.name AS company
+FROM jobs j
+INNER JOIN companies c ON c.id = j.company_id;
+
+-- LEFT JOIN keeps unmatched left rows (jobs with NO applications):
+SELECT j.title, COUNT(a.id) AS applicants
+FROM jobs j
+LEFT JOIN applications a ON a.job_id = j.id
+GROUP BY j.id;
+```
+
+The interview favorite: "INNER vs LEFT?" — LEFT preserves left rows that have no match (NULLs on the right); INNER drops them.
+
+## Indexes: the trade
+
+```sql
+CREATE INDEX idx_applications_job ON applications (job_id);
+```
+
+Lookups on `job_id` go from full-scan to O(log n). Cost: slightly slower writes and extra storage. Index the columns you filter/join/sort on — not everything.
+
+## Transactions: all or nothing
+
+```sql
+BEGIN;
+UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+COMMIT;  -- or ROLLBACK on any failure
+```
+
+Money moves, inventory decrements, seat bookings — anywhere partial completion is corruption.
+
+## WHERE vs HAVING
+
+```sql
+SELECT company_id, COUNT(*) AS openings
+FROM jobs
+WHERE status = 'active'          -- filters ROWS before grouping
+GROUP BY company_id
+HAVING COUNT(*) >= 3;            -- filters GROUPS after aggregation
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "You need all jobs, including ones with zero applicants, plus applicant counts. Join type?",
+      options: ["INNER JOIN", "LEFT JOIN + COUNT(right.id)", "CROSS JOIN", "Two separate queries only"],
+      answer: 1,
+      why: "LEFT JOIN keeps job rows with no match; COUNT(a.id) counts non-NULL right rows, so zero stays zero (COUNT(*) would say 1).",
+    },
+    {
+      q: "What does an index cost you?",
+      options: ["Nothing", "Slower writes and extra storage", "Read performance", "Transaction safety"],
+      answer: 1,
+      why: "Every INSERT/UPDATE must also update indexes — that's the price of fast reads. Index deliberately.",
+    },
+    {
+      q: "HAVING vs WHERE?",
+      options: ["Same thing", "WHERE filters rows before grouping; HAVING filters groups after aggregation", "WHERE is for JOINs only", "HAVING is faster"],
+      answer: 1,
+      why: "Order of operations: FROM → WHERE → GROUP BY → HAVING → SELECT. You can't use aggregates in WHERE.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Complete SQLBolt lessons 1–12, then the SQLZoo joins section.
+2. Design a blog schema (users, posts, comments, tags) with foreign keys and constraints.
+3. Write a query that needs an index; prove the speedup with `EXPLAIN ANALYZE` before/after.
+
+## Curated resources
+
+- [Postgres tutorial (Neon)](https://neon.com/postgresql/tutorial) — Neon · free
+- [SQLBolt](https://sqlbolt.com) — interactive · free
+- [PostgreSQL official tutorial](https://www.postgresql.org/docs/current/tutorial.html) — Official docs · free

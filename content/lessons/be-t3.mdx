@@ -1,0 +1,83 @@
+/* lesson-meta {"topicId":"be-t3","title":"Git workflows (branching, PRs)","minutes":30,"blurb":"Teams live in branches and pull requests — professional workflow is a hiring signal."} */
+
+Teams live in branches and pull requests. Professional Git workflow — feature branches, clean history, reviewed merges — is a hiring signal in itself.
+
+## The feature-branch loop
+
+```bash
+git switch main && git pull            # start fresh
+git switch -c feature/rate-limiting    # one concern per branch
+# ...small commits as you go...
+git push -u origin feature/rate-limiting
+# open PR → review → merge → delete branch
+```
+
+## Keeping history readable
+
+```bash
+git rebase -i main     # squash/reorder your branch's commits
+# pick = keep, squash = fold into previous, reword = rename
+```
+
+A PR with 3 meaningful commits ("Add rate limiter", "Wire into auth", "Add tests") beats 17 "wip" commits. Squash-merge on the platform achieves the same outcome for busy branches.
+
+## Conflicts with intent
+
+```text
+<<<<<<< HEAD
+const LIMIT = 100;
+=======
+const LIMIT = 60;
+>>>>>>> feature/rate-limiting
+```
+
+Read both sides, choose deliberately (or combine), delete the markers, `git add`, continue. Test after resolving — a bad conflict resolution ships broken code silently.
+
+## CI as the team's gatekeeper
+
+A GitHub Actions workflow that runs lint + tests on every PR converts code review from style arguments into logic review:
+
+```yaml
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm test
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Scope of a good feature branch?",
+      options: ["Whole sprint's work", "One concern/feature, mergeable in a day or two", "One file only", "Whatever ends up in the working tree"],
+      answer: 1,
+      why: "Small branches get faster reviews, easier rebases, and cleaner reverts.",
+    },
+    {
+      q: "git rebase -i on your own unpushed branch is for…",
+      options: ["Deleting the repo", "Cleaning your branch history before others see it (squash, reword, reorder)", "Merging main automatically", "Fixing conflicts on main"],
+      answer: 1,
+      why: "Interactive rebase rewrites YOUR unshared history into a readable story. Never rewrite shared branches.",
+    },
+    {
+      q: "After resolving a conflict you should…",
+      options: ["Commit immediately, trust the markers", "Run the tests, then commit the resolution", "Delete the file", "Ask Git to auto-fix"],
+      answer: 1,
+      why: "Conflict resolution is a hand-edit — tests catch the wrong-but-compiling choice.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Contribute one real PR to an open-source repo (docs fixes count!).
+2. Squash a messy 7-commit feature branch into 3 clean commits with `rebase -i`.
+3. Add a GitHub Actions workflow that runs a script on every PR; break it, then fix it.
+
+## Curated resources
+
+- [Pro Git book, ch. 3–7](https://git-scm.com/book/en/v2) — Official docs · free
+- [GitHub Actions docs](https://docs.github.com/en/actions) — GitHub · free

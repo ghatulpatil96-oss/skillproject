@@ -1,0 +1,84 @@
+/* lesson-meta {"topicId":"be-t9","title":"Testing: unit & integration","minutes":40,"blurb":"Tests are how you change code without fear."} */
+
+Tests are how you change code without fear. Unit tests catch logic bugs; integration tests catch wiring bugs; both are expected in professional repos.
+
+## Anatomy of a good test
+
+```js
+import { describe, it, expect } from "vitest";
+import { validateJob } from "./validateJob";
+
+describe("validateJob", () => {
+  it("rejects a job with no required skills", () => {
+    // arrange
+    const input = { title: "Backend Dev", skills: [] };
+    // act + assert
+    expect(validateJob(input).ok).toBe(false);
+  });
+
+  it("accepts minimum valid input", () => {
+    const input = { title: "Dev", skills: [{ id: "nodejs", minScore: 60 }] };
+    expect(validateJob(input).ok).toBe(true);
+  });
+});
+```
+
+One behavior per test, named after the behavior. The test name is documentation.
+
+## Unit vs integration — the pyramid
+
+- **Unit**: one function/module, dependencies stubbed. Fast, hundreds of them.
+- **Integration**: real modules together — e.g. your Express app + test DB, hit over HTTP:
+
+```js
+import request from "supertest";
+import { app } from "./app";
+
+it("creates and fetches a job", async () => {
+  const created = await request(app)
+    .post("/jobs").send({ title: "Dev", skills: [...] });
+  expect(created.status).toBe(201);
+
+  const found = await request(app).get(`/jobs/${created.body.id}`);
+  expect(found.body.title).toBe("Dev");
+});
+```
+
+## What to test (and what not)
+
+Test boundaries and branches: validation edges, auth rules, money math, permission logic. Don't test getters, tautologies, or the framework itself.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Best test name?",
+      options: ["test1", "works", "rejects a job with no required skills", "validateJobTest"],
+      answer: 2,
+      why: "Names describe behavior — the failure output then reads as a specification.",
+    },
+    {
+      q: "Integration tests differ from unit tests because they…",
+      options: ["Run slower only", "Exercise real modules together (app + DB over HTTP) to catch wiring bugs", "Never use databases", "Replace unit tests"],
+      answer: 1,
+      why: "Unit tests prove pieces work alone; integration proves they work together — different failure modes.",
+    },
+    {
+      q: "A function returning 0.1+0.2 — what should the test assert?",
+      options: ["toBe(0.3)", "toBeCloseTo(0.3)", "toBeGreaterThan(0)", "Nothing, floats are random"],
+      answer: 1,
+      why: "IEEE-754 floats need approximate comparison: toBeCloseTo. Exact float equality is a false-failure factory.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Write 10 unit tests for a validation module, edge cases included (empty, huge, unicode).
+2. Write integration tests for a CRUD API: create → read → update → delete in one flow.
+3. Add `npm test` to CI and break the build on failure — watch the PR go red.
+
+## Curated resources
+
+- [Vitest documentation](https://vitest.dev/guide/) — Official docs · free
+- [Testing JavaScript (free articles)](https://testingjavascript.com) — Education platform · free tier

@@ -1,0 +1,64 @@
+/* lesson-meta {"topicId":"qa-t2","title":"Writing effective test plans","minutes":30,"blurb":"Turn 'we tested it' into evidence: scope, risk, and coverage tradeoffs."} */
+
+A test plan turns "we tested it" into evidence. Scope, risk, and coverage tradeoffs are the engineering content — the document is just the container.
+
+## The one-page plan that gets read
+
+```markdown
+# Test plan: Checkout v2
+
+**Scope IN**: cart totals, coupon logic, payment intents, confirmation email
+**Scope OUT**: payment-gateway internals (vendor-tested), admin UI
+
+**Top risks:**
+1. Coupon + delivery-fee interaction (new code, money path)
+2. Double-submit creating two orders (concurrency)
+3. Abandoned-intent cleanup (cron)
+
+**Approach**: boundary tests on totals; API tests for coupons;
+E2E happy path; manual exploratory on mobile networks
+**Exit criteria**: 0 open S1/S2, E2E green in CI, all money-path cases executed
+```
+
+## Techniques that find bugs random testing misses
+
+**Equivalence partitioning**: age field 18–99 → test one valid (30), both edges (18, 99), one below (17), one above (100). You don't test every value — you test each *class*.
+
+**Boundary values**: bugs live at edges. `<= 99` vs `< 99` fails only at exactly 99.
+
+**State transitions**: a subscription: trial → active → past_due → canceled. Test the *arrows*, including illegal ones (cancel a canceled subscription?).
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Age input accepts 18–99. Minimum high-value tests?",
+      options: ["18 and 99 only", "17, 18, 99, 100 (+ one valid middle like 30)", "Every age 18–99", "Random 10 values"],
+      answer: 1,
+      why: "Boundaries (17/18, 99/100) catch off-by-one comparisons; one mid-value confirms the valid class works.",
+    },
+    {
+      q: "Why declare scope OUT in a test plan?",
+      options: ["To look thorough", "Testing everything is impossible — explicit exclusions make coverage a defensible decision, not an oversight", "Legal requirement", "To skip risk areas quietly"],
+      answer: 1,
+      why: "Exclusions with justification (vendor-tested, out of release) protect the team when something in that area breaks later.",
+    },
+    {
+      q: "Testing trial → active → canceled transitions means testing…",
+      options: ["Each state's screen", "The legal transitions AND the illegal ones (cancel a canceled sub)", "Only the happy path", "The billing code"],
+      answer: 1,
+      why: "Illegal-transition bugs (double refund, zombie subscriptions) are exactly what state-based thinking catches.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Write a 2-page test plan for an e-commerce checkout: scope, risks, techniques, exit criteria.
+2. Apply boundary-value analysis to a date field (start/end ranges, leap year); find bugs others miss.
+3. Estimate testing effort for a feature and defend the number to a mock stakeholder.
+
+## Curated resources
+
+- [ISTQB Foundation syllabus](https://www.istqb.org/certifications/certified-tester-foundation-level) — Standards body · free
+- [Ministry of Testing: test planning](https://www.ministryoftesting.com) — Education platform · free

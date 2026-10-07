@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+.DS_Store
+
+# runtime JSON stores (users with password hashes, attempts, outbox…)
+.data/
+.devserver.log

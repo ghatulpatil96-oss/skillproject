@@ -1,0 +1,75 @@
+/* lesson-meta {"topicId":"qa-t6","title":"CI integration: run tests on GitHub Actions","minutes":35,"blurb":"Tests that only run on your laptop are half real."} */
+
+Tests that only run on your laptop are half real. CI integration makes quality automatic and visible on every pull request.
+
+## The workflow
+
+```yaml
+# .github/workflows/tests.yml
+name: Tests
+on: [pull_request]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --project=chromium
+      - uses: actions/upload-artifact@v4
+        if: failure()                      # only upload on failure
+        with:
+          name: traces
+          path: test-results/
+```
+
+Every PR now runs the suite. A red check stops the merge — that's the quality gate.
+
+## What makes CI suites succeed where local suites rot
+
+- **Deterministic**: no sleeps, no dependence on execution order
+- **Fast**: parallelize/shard; 5-minute suites get run, 40-minute suites get skipped
+- **Self-contained**: the workflow builds the app, seeds test data, runs against itself
+- **Quarantined flakes**: a test that fails randomly gets fixed or isolated within days — never tolerated
+
+## Artifacts: evidence on failure
+
+Upload traces, screenshots, and the HTML report on failure. The reviewer sees the failing moment without reproducing it — that single practice makes CI test failures fixable by anyone, not just their author.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "The merge-blocking power of CI comes from…",
+      options: ["Developers' discipline", "Required status checks — a red job prevents merging in branch protection settings", "Email alerts", "The workflow name"],
+      answer: 1,
+      why: "GitHub branch protection can mark checks as required; red means no merge, no exceptions.",
+    },
+    {
+      q: "Why upload artifacts only on failure?",
+      options: ["Artifacts are expensive", "Failure evidence (traces/screenshots) is exactly what reviewers need — success needs none", "It's required by Actions", "To speed up the runner"],
+      answer: 1,
+      why: "Traces on success are noise; on failure they're the debugging record that makes remote fixes possible.",
+    },
+    {
+      q: "A test fails ~1 in 10 CI runs. Professional response?",
+      options: ["Hit retry until green", "Quarantine it, fix the race condition (or the product bug it may actually be finding)", "Delete it", "Ignore it"],
+      answer: 1,
+      why: "Flaky tests erode trust in the whole suite — and sometimes they're the only thing catching a real intermittent bug.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Add a workflow that runs your Playwright suite on every PR.
+2. Upload the HTML report + traces as artifacts on failure; open one from a red run.
+3. Get the suite under 5 minutes; shard it across projects if needed.
+
+## Curated resources
+
+- [GitHub Actions docs](https://docs.github.com/en/actions) — GitHub · free
+- [Playwright: CI setup](https://playwright.dev/docs/ci) — Official docs · free

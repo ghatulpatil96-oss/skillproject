@@ -1,0 +1,82 @@
+/* lesson-meta {"topicId":"be-t5","title":"Express: routing, middleware, errors","minutes":40,"blurb":"The minimal framework most of the industry runs on — master the vocabulary and every other framework feels familiar."} */
+
+Express is the minimal backend framework most of the industry runs on. Routing, middleware, and error handling are its whole vocabulary.
+
+## Routes by resource
+
+```js
+const jobs = express.Router();
+
+jobs.get("/", listJobs);              // GET /jobs
+jobs.post("/", requireAuth, createJob); // POST /jobs
+jobs.get("/:id", getJob);             // GET /jobs/42
+jobs.patch("/:id", requireAuth, updateJob);
+jobs.delete("/:id", requireAdmin, deleteJob);
+
+app.use("/jobs", jobs);
+```
+
+Handlers stay thin: parse input → call a service function → respond. Business logic lives in services you can test without HTTP.
+
+## Middleware is just functions in a chain
+
+```js
+function requireAuth(req, res, next) {
+  const user = getUserFromToken(req.headers.cookie);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  req.user = user;       // decorate for downstream handlers
+  next();
+}
+```
+
+Order matters: `cookie-parser` → auth → rate limit → routes → error handler.
+
+## The error handler that saves you
+
+Async errors don't reach Express's default handler — wrap them:
+
+```js
+const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
+
+app.use((err, req, res, next) => {
+  if (err instanceof ValidationError)
+    return res.status(400).json({ errors: err.fields });
+  console.error(err);
+  res.status(500).json({ error: "Internal error" });
+});
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Middleware order matters because…",
+      options: ["Express sorts by name", "Requests flow through in registration order — auth must run before protected routes", "It doesn't", "Errors skip middleware"],
+      answer: 1,
+      why: "The chain is sequential; a 401 from auth middleware stops the request before your handler ever runs.",
+    },
+    {
+      q: "An async route throws. What happens without a wrapper?",
+      options: ["Express catches it automatically", "Unhandled rejection — request hangs, error handler never runs", "Server crashes always", "Express retries"],
+      answer: 1,
+      why: "Express 4 doesn't catch promise rejections; .catch(next) (or Express 5) routes async errors to the error middleware.",
+    },
+    {
+      q: "Where does business logic belong?",
+      options: ["In route handlers", "In service modules the handlers call — testable without HTTP", "In middleware", "In the database"],
+      answer: 1,
+      why: "Thin handlers + testable services is the structure that survives scale and team growth.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Build a CRUD API for notes with validation and proper status codes (201/400/404).
+2. Write a request-logging middleware and a JSON 404 handler.
+3. Add the centralized error handler; prove it catches a thrown async error with a test.
+
+## Curated resources
+
+- [Express guide: routing](https://expressjs.com/en/guide/routing.html) — Official docs · free
+- [Express: writing middleware](https://expressjs.com/en/guide/writing-middleware.html) — Official docs · free

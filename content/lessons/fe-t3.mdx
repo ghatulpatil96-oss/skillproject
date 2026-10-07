@@ -1,0 +1,76 @@
+/* lesson-meta {"topicId":"fe-t3","title":"Responsive design & media queries","minutes":35,"blurb":"One codebase that works from a 360px phone to a 4K monitor."} */
+
+More than half of all web traffic is mobile. Responsive design means a single codebase that adapts from a 360px phone to a 4K monitor — using fluid sizing and media queries, not separate mobile sites.
+
+## Mobile-first is a CSS ordering strategy
+
+Write base styles for the smallest screen, then layer on complexity with `min-width` queries. You'll write less overrides and nothing gets forgotten on small screens.
+
+```css
+/* base: mobile */
+.nav { display: none; }
+.nav.open { display: flex; flex-direction: column; }
+
+/* 768px and up: horizontal nav */
+@media (min-width: 768px) {
+  .nav { display: flex; }
+  .nav.open { flex-direction: row; }
+}
+```
+
+## Relative units over fixed pixels
+
+`rem` scales with the user's root font size (accessibility!), `%` and `vw` scale with the container. Pixels are fine for borders and shadows, not for type and layout.
+
+```css
+.card {
+  font-size: 1rem;        /* respects user settings */
+  padding: clamp(16px, 4vw, 32px); /* fluid, with sane bounds */
+  max-width: 65ch;        /* readable line length */
+}
+```
+
+## Test like a user, not like a designer
+
+DevTools device emulation catches layout breaks, but also test: touch targets (min 44×44px), reduced motion (`prefers-reduced-motion`), and real devices when possible.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Mobile-first means…",
+      options: ["Ship the mobile app first", "Base styles for small screens, then min-width media queries", "Hide content on mobile to save space", "Max-width queries going down"],
+      answer: 1,
+      why: "You style the smallest viewport as the default and enhance upward with min-width queries.",
+    },
+    {
+      q: "Why prefer rem for font sizes?",
+      options: ["It's shorter to type", "It scales with the user's browser font-size setting", "It renders faster", "It works without CSS reset"],
+      answer: 1,
+      why: "rem tracks the root font size, so users who set larger text in their browser get larger text on your site too.",
+    },
+    {
+      q: "Minimum recommended touch target size?",
+      options: ["16×16px", "24×24px", "44×44px", "100×100px"],
+      answer: 2,
+      why: "44×44px (roughly a fingertip) is the widely cited minimum — smaller targets cause tap errors on phones.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Take your Stage-1 news homepage and make it perfect at 360px, 768px, and 1440px.
+2. Build a responsive navigation that collapses into a hamburger below 768px — keyboard accessible, not just click.
+3. Emulate `prefers-reduced-motion: reduce` in DevTools and add appropriate fallbacks for your animations.
+
+## Curated resources
+
+- [web.dev: Responsive design](https://web.dev/learn/design) — Google · free
+- [MDN: Mobile-first design](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Responsive/Mobile_first) — MDN · free
+
+## Common mistakes interviewers spot
+
+- Designing at 1920px and never testing below 1024px
+- Fixed heights that clip text when font size changes
+- Touch targets smaller than 44×44px

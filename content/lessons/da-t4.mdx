@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"da-t4","title":"Python basics & notebooks","minutes":40,"blurb":"The analyst's automation layer — notebooks for exploration, scripts for repeatable work."} */
+
+Python is the analyst's automation layer. Notebooks are for exploration; scripts are for repeatable work — knowing when to use which is professionalism.
+
+## The syntax that covers 80% of analysis
+
+```python
+sales = [120, 340, 90, 250]
+
+big = [s for s in sales if s > 100]        # comprehension
+totals = {region: sum(vals) for region, vals in by_region.items()}
+
+def monthly_summary(rows, tax=0.18):
+    """Net after tax, rounded — docstrings are free documentation."""
+    return round(sum(rows) * (1 - tax), 2)
+```
+
+## The notebook workflow (Colab = zero setup)
+
+```python
+# cell 1: load
+import pandas as pd
+df = pd.read_csv("sales.csv")
+
+# cell 2: explore
+df.head(), df.shape, df.describe()
+
+# cell 3: one question → one answer
+df.groupby("region")["amount"].sum().sort_values(ascending=False)
+```
+
+One cell, one idea. Notebooks that run top-to-bottom are reproducible; notebooks run out of order are science experiments.
+
+## From notebook to script
+
+```python
+# summarize.py — parameterized, runnable, schedulable
+import sys
+import pandas as pd
+
+def main(path: str) -> None:
+    df = pd.read_csv(path)
+    summary = df.groupby("region")["amount"].sum()
+    print(summary.to_markdown())
+
+if __name__ == "__main__":
+    main(sys.argv[1])
+```
+
+Same analysis, but now `python summarize.py sales.csv` runs anywhere — a cron job, a teammate's laptop, CI.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Notebooks vs scripts — the professional split is…",
+      options: ["Notebooks for everything", "Notebooks to explore, scripts (parameterized) for anything that repeats", "Scripts for everything", "Neither; use Excel"],
+      answer: 1,
+      why: "Exploration is iterative and visual (notebook); production is parameterized and scheduled (script).",
+    },
+    {
+      q: "A comprehension like [s*2 for s in sales if s > 0] replaces…",
+      options: ["The print function", "A for-loop with an append and an if", "pandas", "The import statement"],
+      answer: 1,
+      why: "It's the idiomatic transform+filter loop — read it as 'keep positives, double each'.",
+    },
+    {
+      q: "Why fail fast on missing config (sys.argv, env vars)?",
+      options: ["Style", "A clear 'missing file path' error beats a traceback 50 lines deep in pandas", "Python requires it", "Notebooks demand it"],
+      answer: 1,
+      why: "Validate inputs at the boundary; the error should name the missing thing, not explode downstream.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Load a CSV in Colab; produce 5 summary statistics and 2 charts in 3 cells.
+2. Refactor that notebook into `summarize.py` taking a file-path argument.
+3. Automate one weekly spreadsheet chore with Python — even a 10-line file-merge counts.
+
+## Curated resources
+
+- [Python official tutorial](https://docs.python.org/3/tutorial/) — Official docs · free
+- [Kaggle: Intro to programming](https://www.kaggle.com/learn/intro-to-programming) — Education platform · free
+- [Google Colab](https://colab.research.google.com) — Google · free

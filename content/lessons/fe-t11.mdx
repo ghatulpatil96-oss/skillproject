@@ -1,0 +1,79 @@
+/* lesson-meta {"topicId":"fe-t11","title":"React Router & data fetching patterns","minutes":40,"blurb":"Routing, URL state, and where loading lives — the architecture of real apps."} */
+
+Real apps are many pages sharing one shell. Routing, URL state, and data-fetching patterns define an app's architecture — and its UX quality.
+
+## Routes, layouts, and the 404
+
+```jsx
+<BrowserRouter>
+  <Routes>
+    <Route element={<Layout />}>          {/* shared shell: nav + <Outlet/> */}
+      <Route index element={<JobsList />} />
+      <Route path="jobs/:id" element={<JobDetail />} />
+      <Route path="*" element={<NotFound />} />
+    </Route>
+  </Routes>
+</BrowserRouter>
+```
+
+Dynamic segments (`:id`) become params: `const { id } = useParams()`.
+
+## URL as state
+
+Filters that live in the URL survive refresh, are shareable, and make the back button work:
+
+```jsx
+const [params, setParams] = useSearchParams();
+const q = params.get("q") ?? "";
+
+<input value={q} onChange={e => {
+  const next = new URLSearchParams(params);
+  e.target.value ? next.set("q", e.target.value) : next.delete("q");
+  setParams(next, { replace: true });
+}} />
+```
+
+## Data fetching: who owns loading?
+
+The core patterns:
+
+- **Fetch-on-render**: component mounts → fetch → loading/error/data state per component. Simple; can waterfall.
+- **Fetch-then-render** (route loaders / TanStack Query): data starts loading when navigation starts; the page arrives with data.
+- **Render-as-you-fetch**: most advanced; rarely hand-rolled anymore.
+
+If you reach for a library, TanStack Query is the industry default — it also caches (server state is not your local state).
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why put filter state in the URL instead of useState?",
+      options: ["It's faster", "Survives refresh, shareable links, back/forward works", "Uses less memory", "Required by React Router"],
+      answer: 1,
+      why: "URL state is durable and shareable — a recruiter can open your filtered view exactly as you left it.",
+    },
+    {
+      q: "A route-level loader (or query prefetch) improves UX because…",
+      options: ["It skips error handling", "Data starts loading at navigation start, so the page arrives with content", "It disables the back button", "It caches forever"],
+      answer: 1,
+      why: "Fetch-on-render waits for the component to mount first; loaders overlap fetching with navigation.",
+    },
+    {
+      q: "Server data (jobs list) should be stored…",
+      options: ["Duplicated into useState and updated by hand", "In a query cache (TanStack Query) or route loader, keyed by request", "In a Redux global store always", "In localStorage"],
+      answer: 1,
+      why: "Duplicating server state into local state causes drift. Cache layers handle refetching, invalidation, and deduping.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Add routing to your React app: list page, detail page, and a real 404.
+2. Move filter state into URL search params so filters survive refresh — and share the link to prove it.
+3. Implement a detail page that shows skeletons while loading and a proper error state.
+
+## Curated resources
+
+- [React Router: official tutorial](https://reactrouter.com/home) — Official docs · free
+- [TanStack Query docs](https://tanstack.com/query/latest) — Official docs · free

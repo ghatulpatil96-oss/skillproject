@@ -1,0 +1,76 @@
+/* lesson-meta {"topicId":"qa-t3","title":"JavaScript essentials for testers","minutes":40,"blurb":"Test automation is programming — async is the engine under every browser test."} */
+
+Test automation is programming. JavaScript fundamentals — especially async — are the engine under Playwright and Selenium; everything else is syntax.
+
+## Async is not optional
+
+Every browser action (click, navigate, wait) is asynchronous. Testers who don't understand promises write the flaky suites everyone hates:
+
+```js
+// ❌ looks like it works, races the page
+const el = await page.$("#submit");   // element handle found...
+el.click();                            // ...but the page may re-render first
+
+// ✅ locator-based: Playwright resolves it at action time
+await page.click("#submit");
+await expect(page.getByRole("heading", { name: "Order placed" })).toBeVisible();
+```
+
+## The data shapes you'll manipulate daily
+
+```js
+// pick fields out of an API response
+const ids = orders.map(o => o.id);
+
+// group failures by browser
+const byBrowser = failures.reduce((acc, f) => {
+  (acc[f.browser] ??= []).push(f.test);
+  return acc;
+}, {});
+```
+
+## Selectors that survive redesigns
+
+```js
+page.getByRole("button", { name: "Checkout" })  // best: semantic
+page.getByTestId("checkout-btn")                // good: stable contract
+page.getByText("Place order")                   // okay: copy can change
+page.click(".btn-primary.mt-4")                 // ❌ styling changes weekly
+```
+
+`data-testid` is a contract between app code and test code — cheap insurance.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why are locator-based actions (page.click) preferred over element handles?",
+      options: ["Shorter syntax", "Locators re-resolve at action time — they wait and survive re-renders, reducing flake", "Handles are deprecated", "They're faster to type"],
+      answer: 1,
+      why: "A handle is a snapshot; if the page re-renders it's stale. Locators find the element when the action runs.",
+    },
+    {
+      q: "Most stable selector strategy across UI redesigns?",
+      options: ["CSS classes", "Roles/names (semantic) and data-testid attributes", "XPath indexes", "Text content"],
+      answer: 1,
+      why: "Classes and layout change weekly; accessibility roles and test ids are deliberate contracts.",
+    },
+    {
+      q: "A suite fails randomly 1 in 10 runs. First suspect?",
+      options: ["The test framework", "Race conditions — missing waits or assertion-after-navigation ordering", "The CI machine", "Flaky developers"],
+      answer: 1,
+      why: "Randomness almost always means timing: the test and the app race. Fix with deterministic waiting, not retries.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Solve 10 async-JS exercises; promises are the daily bread of automation.
+2. Build a small test-data generator (random users, addresses) with plain functions.
+3. Deliberately break a passing test; use traces/screenshots to diagnose in under 5 minutes.
+
+## Curated resources
+
+- [javascript.info](https://javascript.info) — Education platform · free
+- [Playwright: writing tests](https://playwright.dev/docs/writing-tests) — Official docs · free

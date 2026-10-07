@@ -1,0 +1,82 @@
+/* lesson-meta {"topicId":"be-t4","title":"Node.js runtime & npm ecosystem","minutes":35,"blurb":"JavaScript outside the browser: the event loop, core modules, and npm done professionally."} */
+
+Node.js is JavaScript outside the browser: non-blocking I/O for high-concurrency servers. Knowing the runtime makes framework code predictable instead of magical.
+
+## The event loop, operationally
+
+Node handles thousands of connections on one thread by never waiting: I/O is handed off (OS/libuv), callbacks queue up, and the loop runs them when the stack empties. The killer is therefore **blocking the stack**:
+
+```js
+app.get("/report", (req, res) => {
+  const sum = hugeArray.reduce(...); // 3s of CPU → EVERY request stalls
+});
+```
+
+CPU-heavy work goes to worker threads or a queue; the event loop stays free for I/O.
+
+## Core modules you'll actually use
+
+```js
+import fs from "node:fs/promises";  // promises API by default
+import path from "node:path";
+import crypto from "node:crypto";   // hashing, tokens
+
+const data = await fs.readFile(path.join(process.cwd(), "data.json"), "utf8");
+```
+
+## npm without pain
+
+- `package-lock.json` is committed — it's the reproducible build
+- `npm ci` in CI (exact, clean); `npm install` locally
+- Semver: `^1.2.3` = minor/patch updates OK, `~1.2.3` = patch only
+
+## An HTTP server with zero frameworks
+
+```js
+import http from "node:http";
+
+http.createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  res.writeHead(404).end();
+}).listen(3000);
+```
+
+Build this once and Express stops being magic — it's convenience over exactly this.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "A 3-second CPU-heavy route handler causes…",
+      options: ["Nothing, requests are isolated", "All other requests to stall — the event loop is blocked", "A memory leak", "Automatic scaling"],
+      answer: 1,
+      why: "One thread runs all handlers; blocking it blocks everyone. Move CPU work to workers/queues.",
+    },
+    {
+      q: "In CI you prefer npm ci over npm install because…",
+      options: ["It's shorter", "It installs exactly from the lockfile in a clean node_modules — reproducible builds", "It's faster always", "It skips devDependencies"],
+      answer: 1,
+      why: "ci fails if package.json and the lock disagree — catching drift instead of silently resolving it.",
+    },
+    {
+      q: "^1.2.3 allows which updates?",
+      options: ["Only patches", "Minor and patch (1.x.x), not major", "Anything including 2.0", "Nothing"],
+      answer: 1,
+      why: "Caret = compatible with 1.x; tilde = patches only; pinning = exact.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Build an HTTP server with the built-in `http` module serving JSON — no Express.
+2. Write a script that streams a large file and reports progress (fs.createReadStream).
+3. Profile a deliberately busy endpoint with `node --inspect` and find the bottleneck in Chrome DevTools.
+
+## Curated resources
+
+- [Node.js official learn guides](https://nodejs.org/en/learn) — Official docs · free
+- [Node.js API reference](https://nodejs.org/docs/latest/api/) — Official docs · free

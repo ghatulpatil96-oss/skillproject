@@ -1,0 +1,70 @@
+/* lesson-meta {"topicId":"be-t1","title":"How the web works: HTTP, DNS, REST","minutes":40,"blurb":"Every API you build rides on this protocol — learn to reason about it, not just configure it."} */
+
+Every API you build rides on the web's core protocol. Understanding HTTP, DNS, and REST semantics separates developers who configure frameworks from engineers who debug them.
+
+## One request, end to end
+
+You type `api.example.com/users`. DNS resolves the name to an IP, TCP opens a connection, TLS encrypts it, HTTP sends a request:
+
+```http
+GET /users?id=42 HTTP/1.1
+Host: api.example.com
+Accept: application/json
+Authorization: Bearer eyJhbGc...
+```
+
+…and reads the response's status line first: `200 OK`, `404 Not Found`, `500 Internal Server Error`. The status code is the API's headline; the body is the story.
+
+## REST: resources and honest verbs
+
+URLs are **nouns** (things), methods are the verbs:
+
+```
+GET    /jobs        # list
+POST   /jobs        # create → 201
+GET    /jobs/42     # read
+PATCH  /jobs/42     # partial update → 200
+DELETE /jobs/42     # remove → 204
+```
+
+An API that answers errors with `200 {success: false}` is lying to every client, cache, and monitor in its path.
+
+## The headers that matter daily
+
+`Content-Type` (what I'm sending), `Accept` (what I'll take), `Authorization` (who I am), `Cache-Control` (how long this is true), and the CORS trio when a browser from another origin comes knocking.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Correct REST design for 'create a job application'?",
+      options: ["POST /createApplication", "POST /applications", "GET /applications/new", "PUT /applications"],
+      answer: 1,
+      why: "Resources are plural nouns; POST on the collection creates a member. Verbs in URLs are RPC, not REST.",
+    },
+    {
+      q: "Which status for a successful creation?",
+      options: ["200", "201", "202", "204"],
+      answer: 1,
+      why: "201 Created — usually with a Location header pointing at the new resource.",
+    },
+    {
+      q: "DELETE is called idempotent because…",
+      options: ["It's fast", "Repeating it has the same effect as calling once (subsequent calls 404/204, nothing further deleted)", "It never fails", "It uses no request body"],
+      answer: 1,
+      why: "Idempotency matters for retries: clients can safely repeat DELETE/GET/PUT, but must not blindly repeat POST.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Use curl against a public API: set headers, read status codes, follow redirects (`curl -i -L`).
+2. Read SkillBridge's own `app/api/applications/route.ts` and map every response to a status code.
+3. Design the resource layout (URIs + methods + statuses) for a library system: books, members, loans.
+
+## Curated resources
+
+- [MDN: How the web works](https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/How_the_Web_works) — MDN · free
+- [MDN: HTTP overview](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview) — MDN · free
+- [MDN: HTTP status reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) — MDN · free

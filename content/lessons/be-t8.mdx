@@ -1,0 +1,80 @@
+/* lesson-meta {"topicId":"be-t8","title":"Authentication: JWT & sessions","minutes":40,"blurb":"Password hashing, session tokens, and cookie flags — the interview questions that separate seniors from juniors."} */
+
+Authentication is where security mistakes live. Password hashing, session tokens, and cookie flags are not optional details — they're what interviews probe and what attackers probe harder.
+
+## Passwords: slow hashes with salt
+
+```js
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verify(password, stored) {
+  const [salt, hash] = stored.split(":");
+  const candidate = scryptSync(password, salt, 64);
+  return timingSafeEqual(candidate, Buffer.from(hash, "hex"));
+}
+```
+
+scrypt/bcrypt/argon2 are deliberately **slow** — that's the feature. Per-user salt kills rainbow tables. `timingSafeEqual` kills timing attacks. Plain SHA-256 is too fast: GPUs try billions per second.
+
+## Sessions vs JWT
+
+| | Session cookie | JWT |
+|---|---|---|
+| State | Server-side store | Self-contained, signed |
+| Revocation | Delete the session | Hard (needs a blocklist) |
+| Best for | Classic web apps | Service-to-service, short-lived tokens |
+
+SkillBridge (this very site) uses a signed, self-contained cookie: HMAC over `{userId, exp}`.
+
+## The cookie flags that matter
+
+```js
+res.cookies.set("sb_session", token, {
+  httpOnly: true,   // JS cannot read it → XSS can't steal it
+  secure: true,     // HTTPS only
+  sameSite: "lax",  // CSRF protection for most cases
+  maxAge: 30 * 86400,
+});
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why scrypt/bcrypt over SHA-256 for passwords?",
+      options: ["Shorter hashes", "Deliberately slow + salted, so mass cracking is expensive", "SHA is deprecated", "They're reversible"],
+      answer: 1,
+      why: "Password hashing must be expensive per attempt. Fast hashes let attackers try billions of guesses per second on GPUs.",
+    },
+    {
+      q: "httpOnly: true means…",
+      options: ["Only HTTPS", "Client-side JavaScript cannot read the cookie — XSS can't exfiltrate it", "Only one site can set it", "It never expires"],
+      answer: 1,
+      why: "document.cookie can't see httpOnly cookies, which is exactly what you want for session tokens.",
+    },
+    {
+      q: "Main tradeoff of self-contained JWTs vs server sessions?",
+      options: ["JWTs are slower to verify", "JWTs can't be revoked easily — no central state to delete", "Sessions can't store data", "JWTs don't work in browsers"],
+      answer: 1,
+      why: "A signed JWT is valid until expiry wherever it travels. Logout-everywhere needs a server-side session store.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Read SkillBridge's `lib/auth.ts`: find the scrypt hashing and HMAC cookie signing; explain each line.
+2. In a local test app, remove `httpOnly` and show `document.cookie` can now steal the session — then restore it.
+3. Add login rate limiting: 5 failed attempts → 15-minute lockout per account.
+
+## Curated resources
+
+- [MDN: HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication) — MDN · free
+- [OWASP Top 10](https://top10.owasp.org) — Standards body · free
+- [MDN: Using HTTP cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies) — MDN · free

@@ -1,0 +1,73 @@
+/* lesson-meta {"topicId":"da-t8","title":"Case studies & interview SQL drills","minutes":40,"blurb":"Analyst interviews test live SQL, product sense, and case reasoning — narration is the skill."} */
+
+Analyst interviews test live SQL, product sense, and case reasoning. Practice out loud — the narration IS the interview.
+
+## Live SQL: the pattern ladder
+
+Expect roughly this escalation:
+
+1. Filter + aggregate: "Monthly revenue for active users"
+2. Joins: "Revenue by region, including regions with zero sales" (LEFT JOIN trap)
+3. Windows: "Top 3 products per region", "7-day rolling average"
+4. Data cleaning live: "This column has mixed formats — fix and aggregate"
+
+```sql
+-- the classic: retention-style question
+SELECT week,
+       COUNT(DISTINCT user_id) AS active,
+       COUNT(DISTINCT CASE WHEN prior_week_active THEN user_id END) AS retained
+FROM weekly_activity
+GROUP BY week;
+```
+
+Narrate before typing: restate the question, name the tables/columns you'll use, then write.
+
+## Metric definitions: ask before assuming
+
+"Activation" = signup? First purchase? Profile complete? **Defining the metric out loud is a scored skill.** The strongest candidates say: "I'll define activated as completed first order within 14 days unless you use a different definition."
+
+## Case framing (20 minutes, structured)
+
+1. **Clarify**: business goal? which metric moves?
+2. **Hypothesize**: 3 plausible drivers (seasonality, channel mix, product change)
+3. **Analyze**: which data would distinguish them? what query/chart?
+4. **Recommend**: one action, one risk, one follow-up measurement
+
+## The portfolio walkthrough (3 minutes)
+
+Problem → data → one hard technical choice → the finding → what changed because of it. Rehearse to 3 minutes; interviewers cut you off at 5.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Given an ambiguous metric question, the strongest first move is…",
+      options: ["Query immediately", "State your definition and ask if it matches theirs", "Ask 10 questions", "Present three answers"],
+      answer: 1,
+      why: "Defining assumptions explicitly shows judgment AND unblocks you in one move — analysts who assume silently build the wrong thing.",
+    },
+    {
+      q: "SQL drill 'revenue by region including zero-sales regions' tests…",
+      options: ["Window functions", "LEFT JOIN + COUNT(non-null)", "Subqueries", "String functions"],
+      answer: 1,
+      why: "LEFT JOIN keeps unmatched regions; counting the right table's nullable id keeps zeros as zeros.",
+    },
+    {
+      q: "The case recommendation should be…",
+      options: ["Five options listed", "One action, one risk, one follow-up measurement", "A dashboard link", "'More data is needed'"],
+      answer: 1,
+      why: "Decisive, falsifiable, measurable — that's what a stakeholder can act on. Option dumps transfer the decision back to them.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Solve 15 hard SQL questions from StrataScratch or Mode, under 10 minutes each, narrating aloud.
+2. Run 3 product-analytics cases with a peer, 20 minutes each; alternate who presents.
+3. Record your portfolio walkthrough; cut it to 3 minutes with a hard stop.
+
+## Curated resources
+
+- [Mode SQL tutorial (advanced)](https://mode.com/sql-tutorial/) — Education platform · free
+- [StrataScratch (free-tier questions)](https://www.stratascratch.com) — Education platform · free tier

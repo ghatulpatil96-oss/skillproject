@@ -1,0 +1,81 @@
+/* lesson-meta {"topicId":"fe-t8","title":"ES6+ features & modules","minutes":30,"blurb":"The syntax and module system every professional codebase assumes you know."} */
+
+ES6+ turned JavaScript from a scripting language into an engineering language. Modules, classes, and modern syntax are table stakes in every professional codebase.
+
+## Modules: import/export
+
+```js
+// math.js — named exports (many per file)
+export function sum(a, b) { return a + b; }
+export const PI = 3.14159;
+
+// main.js
+import { sum, PI } from "./math.js";
+
+// only one default per file — the "main thing"
+export default class Calculator {}
+import Calculator from "./calculator.js";
+```
+
+## Destructuring & spread — daily bread
+
+```js
+const { name, ...rest } = user;        // pull + collect
+const updated = { ...user, age: 21 };  // immutable update
+const [first, , third] = places;       // skip with holes
+```
+
+## Optional chaining & nullish coalescing
+
+```js
+const city = user?.address?.city ?? "Unknown";
+// user may be null → undefined instead of a crash
+// ?? only falls back on null/undefined (0 and "" are kept!)
+```
+
+That `??` vs `||` difference (zero and empty string) is a favorite interview question.
+
+## Map/Set vs plain objects
+
+```js
+const counts = new Map();       // any key type, iterable, .size
+counts.set("js", (counts.get("js") ?? 0) + 1);
+
+const seen = new Set(ids);      // O(1) membership checks
+if (seen.has(id)) return;
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "How many default exports can a module have?",
+      options: ["Unlimited", "One", "Two (one class, one function)", "Zero"],
+      answer: 1,
+      why: "Exactly one default export per module; anything else must be named exports.",
+    },
+    {
+      q: "0 || \"default\" and 0 ?? \"default\" return…",
+      options: ["\"default\" and 0", "0 and \"default\"", "Both \"default\"", "Both 0"],
+      answer: 0,
+      why: "|| treats 0 as falsy; ?? only replaces null/undefined. Empty string behaves the same way.",
+    },
+    {
+      q: "Best structure for counting word frequencies?",
+      options: ["Array with indexOf", "Map with word keys", "Nested loops", "JSON.stringify tricks"],
+      answer: 1,
+      why: "Map gives O(1) get/set for arbitrary keys and handles any key type without prototype pitfalls.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Refactor a Stage-2 project into ES modules with clean named exports.
+2. Rewrite a nested-property access chain (`a && a.b && a.b.c`) with optional chaining.
+3. Use a `Map` to count word frequency in a paragraph; print the top 5.
+
+## Curated resources
+
+- [javascript.info: Modules](https://javascript.info/modules) — Education platform · free
+- [MDN: JavaScript reference (ES6+)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference) — MDN · free

@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"be-t2","title":"JavaScript for backend devs","minutes":35,"blurb":"Same language, different priorities: errors, streams, and configuration."} */
+
+Backend JavaScript has different priorities than frontend: error handling, streams, and module systems matter more than DOM tricks. Solidify the core before touching frameworks.
+
+## Errors are part of your API surface
+
+```js
+class ValidationError extends Error {
+  constructor(fields) {
+    super("Invalid input");
+    this.name = "ValidationError";
+    this.fields = fields;
+  }
+}
+
+try {
+  validate(body);
+} catch (err) {
+  if (err instanceof ValidationError) {
+    return res.status(400).json({ errors: err.fields });
+  }
+  throw err; // unknown → 500 path
+}
+```
+
+Custom error classes let handlers map domain failures to honest HTTP codes.
+
+## Async in servers: parallel and bounded
+
+```js
+// independent work → parallel
+const [user, orders] = await Promise.all([
+  db.users.get(id),
+  db.orders.byUser(id),
+]);
+
+// unbounded parallel on 10k items = explode; batch it
+for (const batch of chunk(items, 50)) {
+  await Promise.all(batch.map(process));
+}
+```
+
+## Configuration lives in the environment
+
+```js
+const PORT = process.env.PORT ?? 3000;
+const DB_URL = process.env.DATABASE_URL; // required — fail fast
+if (!DB_URL) throw new Error("DATABASE_URL missing");
+```
+
+Secrets never go in code. `.env` locally (gitignored), platform env vars in production.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why custom error classes instead of strings?",
+      options: ["Nicer logs only", "Handlers can match error types and map them to honest status codes", "Strings are slower", "Required by Node"],
+      answer: 1,
+      why: "instanceof checks turn 'something failed' into 400-vs-409-vs-500 decisions at the boundary.",
+    },
+    {
+      q: "await inside a for-loop over 10,000 items is…",
+      options: ["Fine, modern CPUs are fast", "Sequential — 10k round-trips; batch with Promise.all chunks instead", "Impossible in Node", "Faster than Promise.all"],
+      answer: 1,
+      why: "Sequential awaits add latency linearly. Chunked parallelism keeps throughput without overwhelming the DB.",
+    },
+    {
+      q: "DATABASE_URL should be…",
+      options: ["Hardcoded, it never changes", "Read from process.env with a fail-fast check", "Stored in the repo's config.js", "Passed as a CLI flag every time"],
+      answer: 1,
+      why: "Environment config differs per deployment; failing fast on missing config beats a mysterious connection error later.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Write a CLI script that fetches, filters, and writes JSON data to disk.
+2. Build a small module with clean exports, then consume it from another file.
+3. Refactor callback-style code into async/await with proper try/catch and typed errors.
+
+## Curated resources
+
+- [Node.js learn guides](https://nodejs.org/en/learn) — Official docs · free
+- [javascript.info](https://javascript.info) — Education platform · free

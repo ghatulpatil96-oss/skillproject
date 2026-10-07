@@ -1,0 +1,78 @@
+/* lesson-meta {"topicId":"fe-t15","title":"Interview prep: 50 frontend questions","minutes":40,"blurb":"Structured practice beats cramming — the patterns behind the question bank."} */
+
+Frontend interviews test JavaScript depth, React reasoning, and UI problem-solving under pressure. Structured practice beats cramming: two weeks of daily drills, not two nights of panic.
+
+## The rapid-fire layer (core JS)
+
+Expect short, sharp questions. Answer in one sentence, then offer to expand:
+
+- **Closures?** "A function keeps access to the variables where it was defined — that's how private counters and React hooks work."
+- **`this`?** "How a function is *called*, not where it's written — arrows take theirs lexically."
+- **Event loop?** "Stack runs to empty, then microtasks (promises), then macrotasks (timers) — that ordering is the whole trick."
+- **`==` vs `===`?** "== coerces, === doesn't. I use === and treat coercion as a parsing problem."
+
+## The build-a-widget layer (30 minutes)
+
+You'll be asked to build something small live — tabs, autocomplete, modal, infinite scroll. What's scored:
+
+1. Clarifying requirements ("keyboard support? multiple open?")
+2. Structure before code — name components/state first
+3. Talking through decisions while typing
+4. Testing the edge cases yourself at the end
+
+```jsx
+// tabs in 20 lines — practice until this is muscle memory
+function Tabs({ items }) {
+  const [active, setActive] = useState(0);
+  return (
+    <div role="tablist">
+      {items.map((it, i) => (
+        <button key={it.id} role="tab" aria-selected={i === active}
+          onClick={() => setActive(i)}>
+          {it.label}
+        </button>
+      ))}
+      <div role="tabpanel">{items[active].content}</div>
+    </div>
+  );
+}
+```
+
+## The system layer (seniority signal)
+
+Even for junior roles: "how would you make this faster?" (measure → split bundles → lazy images), "how would you test this?" (unit the logic, e2e the happy path).
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "In a live coding exercise, the best first move is…",
+      options: ["Start typing fast", "Clarify requirements and outline the approach", "Ask for hints", "Open Google"],
+      answer: 1,
+      why: "Interviewers score structure and communication as heavily as code. Requirements-first also catches half the trick in the prompt.",
+    },
+    {
+      q: "Best answer structure for rapid-fire questions?",
+      options: ["One-line answer, then offer to go deeper", "Ten-minute monologue", "Say 'I'd Google it'", "Only answer what's asked, nothing more"],
+      answer: 0,
+      why: "Concise first shows clarity; offering depth shows you know more without wasting everyone's time.",
+    },
+    {
+      q: "The most under-practiced interview skill is…",
+      options: ["Typing speed", "Talking out loud while coding", " memorizing tricky outputs", "Knowing every framework"],
+      answer: 1,
+      why: "Silent coding scores zero on communication. Narrate decisions — practice it deliberately, on video.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Answer 5 questions/day out loud from a question bank for 2 weeks — voice notes count.
+2. Do 5 timed build-a-widget exercises (tabs, modal, autocomplete, star rating, infinite scroll); record yourself and review.
+3. Mock interview with a peer — alternate interviewer/candidate, give structured feedback.
+
+## Curated resources
+
+- [GreatFrontEnd — free practice questions](https://www.greatfrontend.com) — Education platform · free tier
+- [freeCodeCamp: Front End Development Libraries](https://www.freecodecamp.org/learn) — Education platform · free

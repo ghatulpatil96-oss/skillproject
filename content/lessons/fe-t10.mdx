@@ -1,0 +1,94 @@
+/* lesson-meta {"topicId":"fe-t10","title":"Hooks: useEffect, useMemo, custom hooks","minutes":45,"blurb":"Effects connect React to the outside world — used well they're invisible, used badly they're infinite loops."} */
+
+Effects connect React to the outside world — network, timers, subscriptions. Used well they're invisible; used badly they cause infinite loops and stale-data bugs.
+
+## useEffect anatomy
+
+```jsx
+useEffect(() => {
+  const ctrl = new AbortController();
+  fetch(`/api/users/${id}`, { signal: ctrl.signal })
+    .then(r => r.json())
+    .then(setUser)
+    .catch(e => { if (e.name !== "AbortError") setError(e); });
+  return () => ctrl.abort();   // cleanup: cancel on unmount/re-run
+}, [id]);                       // re-run only when id changes
+```
+
+Three questions for every effect: **when does it run** (deps), **how does it clean up** (return), **did I mean for this**?
+
+## The effect you should delete
+
+The React docs have a whole page on this because it's the #1 junior mistake — deriving state in effects causes extra renders and flicker:
+
+```jsx
+// ❌ effect + state for something computable
+const [full, setFull] = useState("");
+useEffect(() => setFull(`${first} ${last}`), [first, last]);
+
+// ✅ just derive it during render
+const full = `${first} ${last}`;
+```
+
+## Custom hooks: extracting logic
+
+Any function starting with `use` can call other hooks — that's how duplicated logic becomes one reusable unit:
+
+```jsx
+function useLocalStorage(key, initial) {
+  const [value, setValue] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? initial; }
+    catch { return initial; }
+  });
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+  return [value, setValue];
+}
+```
+
+## useMemo/useCallback: measured, not vibes
+
+Memoization has a cost. Reach for it when you've measured a problem (expensive computation, referential-identity-sensitive children) — not as decoration.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "An effect with no dependency array runs…",
+      options: ["Once", "After every render", "Never", "Only on unmount"],
+      answer: 1,
+      why: "No array = after every render. [] = once (mount). [a, b] = when a or b changes.",
+    },
+    {
+      q: "What's the cleanup function for in a fetch effect?",
+      options: ["Style resets", "Cancelling the request (AbortController) when the component unmounts or deps change", "Garbage collection", "It logs metrics"],
+      answer: 1,
+      why: "Without abort, a slow response can setState on an unmounted component, or a stale response can overwrite a fresh one.",
+    },
+    {
+      q: "fullName derived from firstName + lastName should be…",
+      options: ["useState + useEffect", "A plain derived const during render", "useMemo, always", "A ref"],
+      answer: 1,
+      why: "Deriving during render is simpler and renders in the same pass. You Might Not Need an Effect, says the official docs.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Write a `useFetch` hook with loading, error, data, and abort-on-unmount.
+2. Refactor a component that syncs derived state with `useEffect` into plain derivation.
+3. Build `useLocalStorage` and use it in your todo app — state survives refresh.
+
+## Curated resources
+
+- [React docs: Synchronizing with effects](https://react.dev/learn/synchronizing-with-effects) — Official docs · free
+- [React docs: You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect) — Official docs · free
+- [React docs: Reuse logic with custom hooks](https://react.dev/learn/reusing-logic-with-custom-hooks) — Official docs · free
+
+## Common mistakes interviewers spot
+
+- Missing dependency arrays → runs every render
+- Deleting deps to silence the linter → stale-closure bugs
+- Effects that set state derived from other state (render loops)

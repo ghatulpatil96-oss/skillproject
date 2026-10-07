@@ -1,0 +1,65 @@
+/* lesson-meta {"topicId":"da-t1","title":"Spreadsheets: formulas, pivots, charts","minutes":35,"blurb":"The most-used analytics tool on earth — and the fastest way to build data intuition."} */
+
+Spreadsheets remain the most-used analytics tool on earth. Formula fluency and pivot-table intuition transfer directly to SQL and BI tools later.
+
+## References: the $ that saves hours
+
+- `A2` — relative: drifts when you copy the formula down/across
+- `$A$2` — absolute: locked
+- `$A2` / `A$2` — locked column/row only
+
+```text
+=SUMIFS(Sales!C:C, Sales!A:A, "North", Sales!B:B, "Jan")
+=B2 * $G$1        "every price × one tax cell"
+```
+
+## Lookups: the modern way
+
+```text
+=XLOOKUP("EMP-104", Employees!A:A, Employees!C:C, "Not found")
+```
+
+`XLOOKUP` (exact by default, built-in fallback) replaced the VLOOKUP/INDEX-MATCH debate — know all three, use XLOOKUP.
+
+## Pivot tables: analysis without formulas
+
+Rows = one dimension, Columns = another, Values = aggregation, Filters = the slice. A business question ("revenue by region by month?") maps to a pivot in under a minute — this speed is the skill.
+
+## Chart selection
+
+Bar for comparing categories, line for trends over time, scatter for relationships, histogram for distributions. Pie charts: only for ≤3 slices — analysts quietly judge pie abuse.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Copying =B2*$G$1 down 100 rows — what happens to the G1 reference?",
+      options: ["Becomes G2, G3…", "Stays $G$1 — absolute reference", "Breaks the formula", "Becomes $H$1"],
+      answer: 1,
+      why: "$ locks the reference. One tax-rate cell referenced 100 times is the textbook absolute-ref use case.",
+    },
+    {
+      q: "Revenue by region by month, from raw sales rows. Fastest build?",
+      options: ["100 SUMIFS formulas", "Pivot table: Rows=region, Columns=month, Values=sum of revenue", "Manual recount", "One giant chart"],
+      answer: 1,
+      why: "Pivots answer multidimensional questions in seconds and update when data changes — no formula sprawl.",
+    },
+    {
+      q: "Best chart for monthly active users over 24 months?",
+      options: ["Pie chart", "Line chart", "Scatter plot", "Stacked bar of one series"],
+      answer: 1,
+      why: "Time series → line. Position along a common scale reads trends instantly.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Rebuild a sales summary with SUMIFS per region per month — then match it with a pivot.
+2. Take a raw export and build 3 pivots answering 3 different business questions.
+3. Clean a messy column (dates as text, mixed formats) using formulas only — no manual edits.
+
+## Curated resources
+
+- [Google Sheets function list](https://support.google.com/docs/table/25273) — Google · free
+- [Microsoft Excel training](https://support.microsoft.com/en-us/excel) — Official docs · free

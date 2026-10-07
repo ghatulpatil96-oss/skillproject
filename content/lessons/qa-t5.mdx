@@ -1,0 +1,83 @@
+/* lesson-meta {"topicId":"qa-t5","title":"API testing with Postman","minutes":35,"blurb":"APIs are where most bugs hide and where tests run fastest."} */
+
+APIs are where most bugs hide, and API tests run 100× faster than UI tests. Postman turns API testing into a systematic, shareable practice.
+
+## The negative-path mindset
+
+Happy paths break rarely; boundaries break constantly. For any endpoint, test:
+
+```text
+✅ 200  valid request
+❌ 400  missing field / wrong type / empty body
+❌ 401  no token · expired token · someone else's token
+❌ 404  id that doesn't exist · someone else's resource (IDOR!)
+❌ 409  duplicate create
+❌ 422  boundary values (score: -1, 101, "abc")
+```
+
+IDOR (accessing another user's resource by changing the id) is the highest-value manual test a junior can run.
+
+## Assertions in the Postman sandbox
+
+```js
+pm.test("status is 201", () => pm.response.to.have.status(201));
+
+pm.test("job has id and title", () => {
+  const job = pm.response.json();
+  pm.expect(job).to.have.property("id");
+  pm.expect(job.title).to.eql("Backend Dev");
+});
+```
+
+## Chaining: the realistic workflow
+
+Login → create → read → update → delete, passing values between requests:
+
+```js
+// login test script: capture the token
+pm.environment.set("token", pm.response.json().token);
+
+// later requests use the header
+Authorization: Bearer {{token}}
+```
+
+Export the collection → run it from the CLI in CI:
+
+```bash
+npx newman run skillbridge-api.json -e dev-env.json
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Requesting /users/999 while logged in as user 7 succeeds. The bug class is…",
+      options: ["Rate limiting", "IDOR — missing ownership check on the resource", "CORS", "SQL injection"],
+      answer: 1,
+      why: "Insecure Direct Object Reference: the server trusts the id without checking ownership. Top-10 severity, easy to find manually.",
+    },
+    {
+      q: "Why test 400-class cases, not just the happy path?",
+      options: ["400s are faster", "Real users and attackers send garbage — validation bugs and information leaks live in the error paths", "Servers log them", "Postman requires it"],
+      answer: 1,
+      why: "The negative paths are where validation, auth, and error-handling bugs (and leaks) hide.",
+    },
+    {
+      q: "Newman is…",
+      options: ["A test framework for Go", "Postman's CLI runner — collections in CI", "A proxy tool", "A JSON parser"],
+      answer: 1,
+      why: "newman runs Postman collections headlessly, which is how API suites land in CI pipelines.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Test a public API with 20 requests: positive + negative paths for each endpoint.
+2. Chain a full workflow: login → create → read → update → delete, using environment variables.
+3. Export the collection and run it with Newman; add it to a GitHub Actions workflow.
+
+## Curated resources
+
+- [Postman learning center](https://learning.postman.com) — Official docs · free
+- [MDN: HTTP status codes](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status) — MDN · free

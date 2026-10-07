@@ -1,0 +1,93 @@
+/* lesson-meta {"topicId":"fe-t1","title":"HTML semantics & accessibility","minutes":35,"blurb":"Structure pages so browsers, screen readers, and search engines all understand them."} */
+
+HTML is the structure of every web page — and **semantic** HTML is what separates hobbyist code from professional code. Screen readers, search engines, and built-in browser features all depend on choosing the right element for the job, not `div`s with classes.
+
+## Why semantics matter
+
+A `<div>` says nothing. A `<nav>` tells assistive technology "this is navigation — you can jump here." That difference is invisible visually, but it decides whether a page is usable with a screen reader, indexable by search engines, and even whether browser features like reader mode work.
+
+```html
+<!-- ❌ div soup: no meaning for anyone -->
+<div class="top">
+  <div class="menu">...</div>
+</div>
+<div class="content">
+  <div class="heading">News</div>
+</div>
+
+<!-- ✅ semantic: structure is machine-readable -->
+<header>
+  <nav aria-label="Main">...</nav>
+</header>
+<main>
+  <h1>News</h1>
+</main>
+```
+
+## The landmarks you should reach for first
+
+- `header` — intro content for the page or section
+- `nav` — groups of navigation links (label it if there are several)
+- `main` — the one primary content area per page
+- `section` / `article` — thematic groupings; `article` is independently shareable
+- `aside` — tangentially related content
+- `footer` — closing content, credits, contact
+
+## Forms deserve real labels
+
+Every input needs a programmatic label — not just placeholder text. Placeholders disappear when typing; labels are read by screen readers and clickable to focus the field.
+
+```html
+<!-- ❌ placeholder-as-label -->
+<input type="email" placeholder="Email" />
+
+<!-- ✅ explicit, accessible, bigger click target -->
+<label for="email">Email</label>
+<input id="email" type="email" autocomplete="email" required />
+```
+
+## ARIA: when native HTML isn't enough
+
+The first rule of ARIA is **don't use ARIA** if a native element works. A `<button>` already gets keyboard focus, Enter/Space handling, and the correct role announced. Rebuilding that with `<div role="button">` is work you will get wrong.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Which element should wrap the primary content of a page?",
+      options: ["<section>", "<main>", "<article>", "<div role=\"content\">"],
+      answer: 1,
+      why: "<main> marks the single primary content area, and screen readers offer a shortcut to jump to it.",
+    },
+    {
+      q: "You need a clickable icon that triggers an action. Best starting point?",
+      options: ["<div role=\"button\"> with a click handler", "<span onclick=...>", "<button> with an aria-label", "<a href=\"#\">"],
+      answer: 2,
+      why: "Native <button> gives focus, keyboard activation, and role for free — just label it (icon-only buttons need aria-label).",
+    },
+    {
+      q: "What's wrong with <input placeholder=\"Search\" /> as the only labeling?",
+      options: ["Nothing, it's fine", "Placeholders vanish on input and aren't a reliable label", "placeholder only works on text inputs", "Search inputs need type=\"text\""],
+      answer: 1,
+      why: "Placeholder text disappears while typing and has inconsistent screen-reader support — use a real <label>.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Rebuild a news homepage using only semantic elements — zero `div`s in the body.
+2. Run it through axe DevTools (free browser extension) and fix every violation it reports.
+3. Build a login form with proper labels, autocomplete attributes, and inline validation messages tied to inputs with `aria-describedby`.
+
+## Curated resources
+
+- [MDN: HTML basics](https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/HTML_basics) — MDN · free
+- [MDN: HTML accessibility guide](https://developer.mozilla.org/en-US/docs/Learn/Accessibility/HTML) — MDN · free
+- [web.dev: Learn HTML](https://web.dev/learn/html) — Google · free
+
+## Common mistakes interviewers spot
+
+- Skipping `alt` on meaningful images (decorative ones get `alt=""`)
+- Choosing headings by font size instead of document outline
+- Building custom dropdowns where `<select>` would do the job

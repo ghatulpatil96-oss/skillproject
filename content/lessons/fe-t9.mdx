@@ -1,0 +1,88 @@
+/* lesson-meta {"topicId":"fe-t9","title":"Components, props & state","minutes":40,"blurb":"React in one idea: UI is a function of state."} */
+
+React is a UI library built on one idea: **UI is a function of state**. Change the state, React re-renders the affected UI. Components, props, and state are the vocabulary you'll use every day.
+
+## Components are functions
+
+```jsx
+function Badge({ label, tone = "green" }) {
+  return <span className={`badge badge-${tone}`}>{label}</span>;
+}
+
+// composition: props flow down
+<Badge label="Verified" tone="green" />
+```
+
+Props are read-only. If a child needs different data, the parent passes new props — the child never mutates them.
+
+## State changes trigger re-renders
+
+```jsx
+const [count, setCount] = useState(0);
+
+// ❌ mutation: same array reference, React sees "nothing changed"
+// items.push(newItem);
+
+// ✅ replacement: new array reference
+setItems(prev => [...prev, newItem]);
+```
+
+The rule: **state updates must be new references**. Arrays and objects get spread/`map`/`filter`, never `.push()`.
+
+## Keys: identity in lists
+
+```jsx
+{todos.map(t => <TodoRow key={t.id} todo={t} />)}
+```
+
+Keys tell React which item is which across re-renders. Index-as-key breaks when items reorder (state attaches to the wrong rows).
+
+## Controlled inputs
+
+```jsx
+const [email, setEmail] = useState("");
+<input value={email} onChange={e => setEmail(e.target.value)} />
+```
+
+React state is the single source of truth — the input just displays it.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why does items.push(x) fail to update the UI?",
+      options: ["push is async", "Same array reference: React compares references and sees no change", "push mutates the prototype", "It only fails in StrictMode"],
+      answer: 1,
+      why: "React re-renders when the state reference changes. Mutating in place keeps the same reference — replace with [...items, x].",
+    },
+    {
+      q: "When are index keys safe?",
+      options: ["Never", "When the list is static: order never changes, items never insert/remove in the middle", "Always, if you also use useMemo", "Only for objects"],
+      answer: 1,
+      why: "Static, never-reordered lists are the one safe case. Dynamic lists need stable IDs.",
+    },
+    {
+      q: "Props are…",
+      options: ["Mutable by the child", "Read-only inputs from the parent", "Global state", "Only strings"],
+      answer: 1,
+      why: "Data flows down; children request changes via callbacks the parent passes down.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Rebuild your vanilla-JS todo list in React — compare the code side by side.
+2. Build a search-filterable product grid from a static array (input state → filter → render).
+3. Break a list deliberately with index-as-key plus reordering; observe the state confusion, then fix with IDs.
+
+## Curated resources
+
+- [React docs: Describing the UI](https://react.dev/learn/describing-the-ui) — Official docs · free
+- [React docs: Managing state](https://react.dev/learn/managing-state) — Official docs · free
+
+## Common mistakes interviewers spot
+
+- Mutating state arrays/objects instead of replacing them
+- Prop drilling 4 levels when lifting state would do
+- Defining components inside other components (remounts every render)

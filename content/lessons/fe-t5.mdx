@@ -1,0 +1,95 @@
+/* lesson-meta {"topicId":"fe-t5","title":"Variables, types, functions","minutes":40,"blurb":"The JavaScript fundamentals interviewers actually probe — closures, coercion, references."} */
+
+JavaScript fundamentals power everything else on this roadmap. Variables and types look simple; the edge cases (coercion, hoisting, closures) are exactly what interviewers test.
+
+## const, let, and scope
+
+Use `const` by default, `let` when reassigning, `var` never. Both `let`/`const` are block-scoped:
+
+```js
+{
+  const a = 1;
+  let b = 2;
+}
+// a and b don't exist here — block scope
+```
+
+## Primitives vs references — the classic trap
+
+Objects are assigned by **reference**; copying a variable copies the pointer, not the object:
+
+```js
+const a = { name: "Ananya" };
+const b = a;          // same object!
+b.name = "Riya";
+console.log(a.name);  // "Riya" — surprise
+
+const c = { ...a };   // shallow copy: top level only
+```
+
+## Closures: functions remember their birthplace
+
+A function keeps access to variables from where it was **defined**:
+
+```js
+function makeCounter() {
+  let count = 0;
+  return () => ++count;  // closes over `count`
+}
+const next = makeCounter();
+next(); // 1
+next(); // 2 — `count` is private and alive
+```
+
+This one pattern explains React hooks, module privacy, and half of interview curveballs.
+
+## The array methods you'll use hourly
+
+```js
+const active = users
+  .filter(u => u.active)          // keep some
+  .map(u => u.name)               // transform each
+  .sort();                        // or reduce for anything
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "const arr = [1,2]; arr.push(3); — does this throw?",
+      options: ["Yes, arr is const", "No — const prevents reassignment, not mutation", "Only in strict mode", "Only for objects"],
+      answer: 1,
+      why: "const locks the binding (no arr = something), not the contents. Use Object.freeze for shallow immutability.",
+    },
+    {
+      q: "What does the makeCounter closure demonstrate?",
+      options: ["Hoisting", "That inner functions keep access to outer variables after the outer returns", "Prototypal inheritance", "Event bubbling"],
+      answer: 1,
+      why: "Closures capture the variable environment — count survives between calls because next holds a reference.",
+    },
+    {
+      q: "typeof null returns…",
+      options: ["\"null\"", "\"object\"", "\"undefined\"", "throws"],
+      answer: 1,
+      why: "A historical bug kept for backwards compatibility — check for null separately: x !== null && typeof x === \"object\".",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Solve 20 array-method katas on freeCodeCamp or Exercism.
+2. Write a closure-based counter from memory; explain out loud why `count` stays alive.
+3. Predict the output of 10 coercion expressions (`1 + "2"`, `[] + {}`…), then verify in the console.
+
+## Curated resources
+
+- [MDN: JavaScript guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide) — MDN · free
+- [javascript.info](https://javascript.info) — The Modern JS Tutorial · free
+- [freeCodeCamp: JS Algorithms & DS](https://www.freecodecamp.org/learn) — Education platform · free
+
+## Common mistakes interviewers spot
+
+- Memorizing output tricks without understanding why
+- `==` instead of `===`, then forgetting coercion rules
+- Shipping AI-generated code they can't trace line by line

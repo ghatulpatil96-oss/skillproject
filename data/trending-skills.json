@@ -1,0 +1,766 @@
+[
+  {
+    "skill_id": "ai-engineering",
+    "title": "AI Engineering & LLM Integration",
+    "category": "AI",
+    "summary": "Build production systems on top of LLMs: RAG pipelines, agents, vector search and prompt/context engineering.",
+    "trend_note": "Core hiring demand across nearly all software roles in 2026 — product teams expect engineers who can ship LLM features, not just call an API.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Foundations: how LLMs work & prompt engineering",
+        "resources": [
+          {
+            "title": "Prompt Engineering Guide (DAIR.AI)",
+            "url": "https://www.promptingguide.ai/",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google: Introduction to Generative AI learning path",
+            "url": "https://www.skills.google/paths/118",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "RAG: embeddings, vector databases, retrieval",
+        "resources": [
+          {
+            "title": "Pinecone Learning Center: Retrieval Augmented Generation",
+            "url": "https://www.pinecone.io/learn/retrieval-augmented-generation/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "OpenAI API documentation: embeddings guide",
+            "url": "https://developers.openai.com/api/docs/guides/embeddings",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Agents & tool use: function calling, orchestration",
+        "resources": [
+          {
+            "title": "Anthropic documentation: tool use (function calling)",
+            "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Microsoft: AI Agents for Beginners (open curriculum)",
+            "url": "https://github.com/microsoft/ai-agents-for-beginners",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "Shipping: evaluation, safety, cost & latency",
+        "resources": [
+          {
+            "title": "OpenAI API documentation: production best practices",
+            "url": "https://developers.openai.com/api/docs/guides/production-best-practices",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "OWASP Top 10 for Large Language Model Applications",
+            "url": "https://owasp.org/projects/top-10-for-large-language-model-applications",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "cloud-architecture",
+    "title": "Cloud Architecture (AWS / Azure / GCP)",
+    "category": "Cloud",
+    "summary": "Design cloud systems end-to-end: identity & IAM, serverless, networking, and multi-cloud cost optimization.",
+    "trend_note": "Migration continues and cloud bills are under CFO scrutiny — cost-aware architects are being hired ahead of generalist developers.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Cloud fundamentals & core services",
+        "resources": [
+          {
+            "title": "AWS Skill Builder: AWS Cloud Quest (free role-based learning)",
+            "url": "https://skillbuilder.aws/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud Skills Boost: Cloud Digital Leader path",
+            "url": "https://www.skills.google/paths/11",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Identity, IAM & the Well-Architected Frameworks",
+        "resources": [
+          {
+            "title": "AWS Well-Architected Framework",
+            "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Microsoft Learn: Azure Well-Architected Framework",
+            "url": "https://learn.microsoft.com/en-us/azure/well-architected/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Serverless & event-driven architecture",
+        "resources": [
+          {
+            "title": "AWS Lambda documentation (developer guide)",
+            "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Serverless Land (AWS-official patterns collection)",
+            "url": "https://serverlessland.com/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "Cost optimization & FinOps basics",
+        "resources": [
+          {
+            "title": "FinOps Framework (FinOps Foundation)",
+            "url": "https://www.finops.org/framework/",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud Architecture Framework: cost optimization",
+            "url": "https://docs.cloud.google.com/architecture/framework/cost-optimization",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "system-design",
+    "title": "System Design",
+    "category": "Backend",
+    "summary": "Scale systems deliberately: caching, queues, sharding, replication, CAP tradeoffs and API gateways.",
+    "trend_note": "The standard senior-engineer interview gate — and the fastest-growing gap between junior and mid-level hires.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Core primitives: caching, load balancing, queues",
+        "resources": [
+          {
+            "title": "Amazon ElastiCache concepts (caching strategies)",
+            "url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Strategies.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud: Load balancing overview & patterns",
+            "url": "https://docs.cloud.google.com/load-balancing/docs/load-balancing-overview",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Data layer: sharding, replication, CAP/PACELC",
+        "resources": [
+          {
+            "title": "MongoDB documentation: sharding introduction",
+            "url": "https://www.mongodb.com/docs/manual/sharding/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "PostgreSQL documentation: high availability & replication",
+            "url": "https://www.postgresql.org/docs/current/high-availability.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "API design at scale: gateways, versioning, rate limits",
+        "resources": [
+          {
+            "title": "Microsoft: API design guidance (Azure Architecture Center)",
+            "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Kong Gateway concepts documentation",
+            "url": "https://developer.konghq.com/gateway/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "Practice: structured design walkthroughs",
+        "resources": [
+          {
+            "title": "System Design Primer (GitHub, community-maintained)",
+            "url": "https://github.com/donnemartin/system-design-primer",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "mlops",
+    "title": "MLOps & Model Deployment",
+    "category": "AI",
+    "summary": "Take models to production: CI/CD for ML, registries, monitoring and drift detection.",
+    "trend_note": "AI systems are moving from prototype to production, and teams are hiring for the unglamorous deployment half.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "MLOps principles & the ML lifecycle",
+        "resources": [
+          {
+            "title": "Google Cloud Architecture Framework: MLOps",
+            "url": "https://docs.cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Microsoft Learn: MLOps on Azure (learning path collection)",
+            "url": "https://learn.microsoft.com/en-us/training/paths/introduction-machine-learn-operations/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Experiment tracking & model registries (MLflow)",
+        "resources": [
+          {
+            "title": "MLflow documentation (tracking & model registry)",
+            "url": "https://mlflow.org/docs/latest/index.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Monitoring, drift detection & retraining",
+        "resources": [
+          {
+            "title": "Evidently AI: ML monitoring course & docs",
+            "url": "https://www.evidentlyai.com/ml-in-production/data-drift",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Amazon SageMaker Model Monitor documentation",
+            "url": "https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "data-engineering",
+    "title": "Data Engineering",
+    "category": "Data",
+    "summary": "Move and model data reliably: ETL/ELT, warehouses, orchestration, data quality and lineage.",
+    "trend_note": "Every AI initiative is bottlenecked by data pipelines — demand for data engineers is outpacing data scientists.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "SQL mastery & warehouse modeling",
+        "resources": [
+          {
+            "title": "PostgreSQL Tutorial (Neon's official Postgres learning site)",
+            "url": "https://neon.com/postgresql/tutorial",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud: BigQuery documentation",
+            "url": "https://docs.cloud.google.com/bigquery/docs",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Orchestration & pipelines (Airflow / dbt)",
+        "resources": [
+          {
+            "title": "Apache Airflow documentation",
+            "url": "https://airflow.apache.org/docs/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "dbt Learn: fundamentals courses",
+            "url": "https://learn.getdbt.com/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Data quality, testing & lineage",
+        "resources": [
+          {
+            "title": "Great Expectations documentation",
+            "url": "https://docs.greatexpectations.io/docs/home/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "OpenLineage documentation",
+            "url": "https://openlineage.io/docs/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "cybersecurity",
+    "title": "Cybersecurity & Zero Trust",
+    "category": "Security",
+    "summary": "Defend modern systems: IAM, secrets management, threat modeling and API security.",
+    "trend_note": "Attack surface keeps expanding and compliance pressure (DPDP, EU AI Act) is forcing security-first hiring.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Security foundations & the OWASP Top 10",
+        "resources": [
+          {
+            "title": "OWASP Top 10 (2021, current standard)",
+            "url": "https://top10.owasp.org/",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "OWASP Web Security Testing Guide",
+            "url": "https://owasp.org/projects/web-security-testing-guide",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Identity, IAM & zero-trust architecture",
+        "resources": [
+          {
+            "title": "NIST SP 800-207: Zero Trust Architecture",
+            "url": "https://csrc.nist.gov/pubs/sp/800/207/final",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud: zero-trust enterprise security overview",
+            "url": "https://docs.cloud.google.com/chrome-enterprise-premium/docs/overview",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Secrets management & key hygiene",
+        "resources": [
+          {
+            "title": "HashiCorp Vault tutorials",
+            "url": "https://developer.hashicorp.com/vault/tutorials",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "Threat modeling practice",
+        "resources": [
+          {
+            "title": "OWASP Threat Modeling process guide",
+            "url": "https://community.owasp.org/Threat_Modeling_Process",
+            "source_type": "standards_body",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "api-automation",
+    "title": "API & Workflow Automation",
+    "category": "Automation",
+    "summary": "Connect systems at scale: REST/GraphQL design, webhooks, and no-code/low-code orchestration tools.",
+    "trend_note": "Automation-first tooling (n8n, Zapier, Make) is being adopted by ops teams, and engineers who can bridge APIs to workflows are in demand.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "REST & GraphQL API fundamentals",
+        "resources": [
+          {
+            "title": "MDN Web Docs: HTTP overview",
+            "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "GraphQL official documentation",
+            "url": "https://graphql.org/learn/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Webhooks & event-driven integrations",
+        "resources": [
+          {
+            "title": "Stripe API documentation: webhooks",
+            "url": "https://docs.stripe.com/webhooks",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "GitHub webhooks documentation",
+            "url": "https://docs.github.com/en/webhooks",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Workflow orchestration tools (n8n / Zapier)",
+        "resources": [
+          {
+            "title": "n8n official documentation & courses",
+            "url": "https://docs.n8n.io/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Zapier Learn (official courses)",
+            "url": "https://learn.zapier.com/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "fullstack-ai",
+    "title": "Full-Stack Fundamentals, AI-assisted",
+    "category": "Web",
+    "summary": "The baseline hiring bar: one frontend framework, one backend language, API design — now paired with AI-tool fluency.",
+    "trend_note": "AI coding assistants are now assumed; what changed is that fundamentals + review skills matter more, not less.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Web foundations: HTML, CSS, JavaScript",
+        "resources": [
+          {
+            "title": "MDN Web Docs: Learn web development",
+            "url": "https://developer.mozilla.org/en-US/docs/Learn",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "The Odin Project: Foundations",
+            "url": "https://www.theodinproject.com/paths/foundations",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Frontend framework depth (React)",
+        "resources": [
+          {
+            "title": "React official documentation: Learn React",
+            "url": "https://react.dev/learn",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "freeCodeCamp: Front End Development Libraries",
+            "url": "https://www.freecodecamp.org/learn/front-end-development-libraries",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Backend with Node/Express + databases",
+        "resources": [
+          {
+            "title": "MDN: Express/Node introduction",
+            "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Express_Nodejs/Introduction",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "PostgreSQL official documentation: tutorial",
+            "url": "https://www.postgresql.org/docs/current/tutorial.html",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "AI-assisted development: prompting, review, verification",
+        "resources": [
+          {
+            "title": "GitHub Copilot official documentation & best practices",
+            "url": "https://docs.github.com/en/copilot",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Claude Code best practices (official docs)",
+            "url": "https://code.claude.com/docs/en/best-practices",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "devops-platform",
+    "title": "DevOps / Platform Engineering",
+    "category": "Cloud",
+    "summary": "Ship infrastructure as a product: CI/CD, IaC, Kubernetes and observability.",
+    "trend_note": "Infra is becoming a team capability — platform engineering roles grew fastest in 2025-26 hiring surveys.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "CI/CD pipelines",
+        "resources": [
+          {
+            "title": "GitHub Actions official documentation",
+            "url": "https://docs.github.com/en/actions",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "Infrastructure as Code (Terraform)",
+        "resources": [
+          {
+            "title": "HashiCorp Terraform tutorials",
+            "url": "https://developer.hashicorp.com/terraform/tutorials",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Containers & Kubernetes",
+        "resources": [
+          {
+            "title": "Kubernetes official documentation: concepts",
+            "url": "https://kubernetes.io/docs/concepts/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Kubernetes official training (Linux Foundation, free intro course)",
+            "url": "https://training.linuxfoundation.org/full-catalog/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "title": "Observability: metrics, logs, traces",
+        "resources": [
+          {
+            "title": "OpenTelemetry documentation",
+            "url": "https://opentelemetry.io/docs/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google: Site Reliability Engineering book (free online)",
+            "url": "https://sre.google/books/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skill_id": "tech-decision-making",
+    "title": "Product & Technical Decision-Making",
+    "category": "Leadership",
+    "summary": "Make defensible technical calls: architecture tradeoffs, SLOs, and managing technical debt.",
+    "trend_note": "Senior/staff interviews now test judgment, not just knowledge — and AI-era teams need humans who can decide what to build.",
+    "last_reviewed": "2026-09-27",
+    "milestones": [
+      {
+        "order": 1,
+        "title": "Architecture decision records & tradeoff analysis",
+        "resources": [
+          {
+            "title": "Architecture Decision Records (ADR hub — docs & templates)",
+            "url": "https://adr.github.io/",
+            "source_type": "education_platform",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          },
+          {
+            "title": "Google Cloud Architecture Framework: design principles",
+            "url": "https://docs.cloud.google.com/architecture/framework",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "title": "SLOs & reliability targets",
+        "resources": [
+          {
+            "title": "Google SRE workbook: implementing SLOs (free online)",
+            "url": "https://sre.google/workbook/implementing-slos/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "title": "Managing technical debt deliberately",
+        "resources": [
+          {
+            "title": "Microsoft Azure Architecture Center: technical debt guidance",
+            "url": "https://learn.microsoft.com/en-us/azure/architecture/antipatterns/",
+            "source_type": "official_docs",
+            "verified_by": "content-team",
+            "last_checked_date": "2026-09-27"
+          }
+        ]
+      }
+    ]
+  }
+]

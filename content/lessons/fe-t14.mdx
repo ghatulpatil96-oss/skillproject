@@ -1,0 +1,74 @@
+/* lesson-meta {"topicId":"fe-t14","title":"Deploying a portfolio project","minutes":30,"blurb":"A deployed project turns code into proof — recruiters click links, not repos."} */
+
+A deployed portfolio turns your code into proof. Recruiters click links, not repositories — every roadmap project should live at a URL with a README that sells the work.
+
+## From repo to URL in minutes
+
+1. Push the project to GitHub.
+2. On Vercel/Netlify: "Import project", pick the repo.
+3. Framework auto-detected (Next/Vite), build command and output configured for you.
+4. First deploy gives you a live HTTPS URL. Every `git push` redeploys automatically.
+
+Environment variables (API keys!) go in the dashboard — **never** in the repo.
+
+## The README that gets read
+
+```markdown
+# JobBoard — skill-first job board
+Live: https://jobboard.vercel.app
+
+Screenshots: (2–3 images)
+
+## Stack
+React + Vite · React Router · TanStack Query
+
+## Features
+- Search + URL-persisted filters
+- Optimistic saves, error states, skeletons
+
+## Run locally
+npm install && npm run dev
+```
+
+Problem, demo, screenshots, stack, setup. Five sections, five minutes, recruiter-proof.
+
+## Production hygiene
+
+- No `console.log`s in the shipped bundle (remove or use a logger)
+- Open your live site's console: zero red errors is the standard
+- Custom domain (or clean subdomain) beats `localhost` screenshots in a resume
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Where do API keys belong?",
+      options: ["In the code, they're small", "In the hosting platform's env vars", "In a committed config.js", "In the README"],
+      answer: 1,
+      why: "Anything in the repo can leak (and history is forever). Platform env vars inject secrets at build/runtime.",
+    },
+    {
+      q: "Deploys should happen…",
+      options: ["Monthly, manually", "Automatically on every push to main", "Only at project end", "Via email request to DevOps"],
+      answer: 1,
+      why: "Git-push-to-deploy is the default on all modern platforms — small, frequent, reversible deploys.",
+    },
+    {
+      q: "The strongest portfolio signal in a README is…",
+      options: ["A long feature list", "A live demo link + screenshots + clear setup", "Badge collection", "Detailed commit logs"],
+      answer: 1,
+      why: "Reviewers click once. Make the first click land on a working demo with visual proof.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Deploy your best project; share the live link with someone and watch them use it.
+2. Write the five-section README with screenshots and the demo link at the top.
+3. Ask one senior dev for feedback on the portfolio; ship one improvement this week.
+
+## Curated resources
+
+- [Vercel documentation](https://vercel.com/docs) — Official docs · free tier
+- [GitHub Pages docs](https://docs.github.com/en/pages) — GitHub · free

@@ -1,0 +1,64 @@
+/* lesson-meta {"topicId":"be-t12","title":"System design basics: load balancers, scaling","minutes":40,"blurb":"Juniors aren't expected to design Google — they're expected to reason clearly about load, storage, and failure."} */
+
+System design interviews test judgment at scale. Nobody expects a junior to design Google — they expect clear reasoning about load, storage, and failure.
+
+## The scaling ladder
+
+1. **One box** — app + DB on a single server. Fine to thousands of users.
+2. **Stateless app tier** — sessions move to Redis/signed cookies, so any server can serve any request.
+3. **Load balancer** — distributes traffic across app servers, health-checks, removes dead ones.
+4. **DB scaling** — read replicas for read-heavy loads, indexes and caching before sharding.
+5. **Caching layers** — Redis in front of hot reads (the biggest cheap win).
+
+## Back-of-envelope math (the senior move)
+
+```
+10,000 req/day = 0.12 QPS average, ~1 QPS peak → one small server
+1,000,000 req/day = ~12 QPS average, ~120 peak → still one beefy box + cache
+10M req/day = ~120 QPS avg, ~1,200 peak → app tier behind an LB
+```
+
+Numbers first. "How much traffic?" is the question that impresses.
+
+## Worked example: URL shortener
+
+- **API**: `POST /urls {longUrl}` → `201 {short}`; `GET /:code` → 301 redirect
+- **Storage**: `code VARCHAR(8) PK, long_url TEXT, created_at` — ~1B rows × ~100B ≈ 100GB — one Postgres, indexed PK
+- **Hot path**: redirect = 1 indexed read → cache top codes in Redis
+- **Codes**: base62 of a counter (short, unique) vs random 8 chars (unguessable)
+- **Failure mode**: DB down → cached redirects still work (reads dominate)
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why does the app tier need to be stateless before scaling out?",
+      options: ["It doesn't", "Any server can serve any request only if no server holds session state", "Stateless is faster CPU-wise", "It's a compliance term"],
+      answer: 1,
+      why: "If user sessions live in one server's memory, the LB can't distribute freely. Move state to Redis or signed cookies.",
+    },
+    {
+      q: "First move when a read-heavy API slows down?",
+      options: ["Shard the database", "Add indexes on hot queries and a cache in front of hot reads", "Rewrite in Go", "Add more app servers"],
+      answer: 1,
+      why: "Index + cache fixes 80% of read slowness at a fraction of the complexity of sharding.",
+    },
+    {
+      q: "In a design interview, back-of-envelope estimation is used to…",
+      options: ["Waste time", "Pick a proportionate design — storage/bandwidth/QPS tell you what tier you need", "Impress with big numbers", "Skip the design"],
+      answer: 1,
+      why: "Numbers drive the design: 100GB fits one box; 100TB changes everything. Start with the math.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Design a URL shortener on paper: API, schema, caching, storage estimate for 1B URLs.
+2. Design SkillBridge itself: services, data stores, and what breaks at 100k users.
+3. Practice 2 designs with a peer, 30 minutes each; trade feedback on clarity.
+
+## Curated resources
+
+- [System Design Primer](https://github.com/donnemartin/system-design-primer) — Education platform · free
+- [AWS Well-Architected Framework](https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html) — Official docs · free

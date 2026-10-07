@@ -1,0 +1,76 @@
+/* lesson-meta {"topicId":"qa-t1","title":"SDLC, bug lifecycle & test cases","minutes":35,"blurb":"QA is engineering discipline applied to quality — systematic, not random clicking."} */
+
+QA is engineering discipline applied to quality: understanding how software is built (SDLC) and how bugs flow (lifecycle) makes your testing systematic instead of random clicking.
+
+## The bug lifecycle
+
+```
+New → Triaged → Assigned → Fixed → Verified → Closed
+                    ↑                    |
+                    └──── Reopened ←─────┘  (fix didn't work)
+```
+
+Your job at both ends: a **reproducible** report at intake, a rigorous verification at close.
+
+## The bug report engineers love
+
+```markdown
+Title: Checkout total shows ₹0 when coupon equals order value
+
+Severity: High (blocks purchases)   Priority: P1 (revenue impact)
+
+Steps:
+1. Add item worth ₹500 to cart
+2. Apply coupon SAVE500 (₹500 off)
+3. Proceed to payment
+
+Expected: payable total ₹0 + delivery fee, order places
+Actual:   total shows ₹0.00, "Place order" does nothing
+
+Env: Chrome 130, Android 14 · attachment: HAR + screen recording
+Reproduced: 5/5 attempts · First seen: build 2.4.1 (worked in 2.4.0)
+```
+
+Every field removes a round-trip question. "Reproduced 5/5" and "worked in 2.4.0" (a regression!) are the two lines that make developers take you seriously.
+
+## Severity vs priority — the classic question
+
+- **Severity** = technical impact (data loss > cosmetic glitch)
+- **Priority** = business urgency (typo on the pricing page: low severity, HIGH priority)
+
+The interview example: the company logo is misspelled on the homepage — severity 4 (cosmetic), priority 1 (everyone sees it, brand damage, fix today).
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "The two lines that most improve a bug report's credibility?",
+      options: ["Emojis and urgency words", "Reproduction rate and the build where it first appeared", "Screenshots only", "A suggested fix"],
+      answer: 1,
+      why: "\"Reproduced 5/5\" proves it's real; \"worked in 2.4.0\" flags a regression — instantly triageable.",
+    },
+    {
+      q: "Typo in the company name on the homepage. Severity and priority?",
+      options: ["S1/P4", "S4/P1 — cosmetic but maximally visible and brand-damaging", "S3/P3", "Not a bug"],
+      answer: 1,
+      why: "Severity is technical impact (tiny), priority is business urgency (everyone sees it). Their split IS this question.",
+    },
+    {
+      q: "A good test case's three essential parts?",
+      options: ["Title, emoji, screenshot", "Preconditions, numbered steps, single expected result", "Code, output, comment", "Priority, author, date"],
+      answer: 1,
+      why: "Anyone should be able to execute it and agree pass/fail — that requires all three, especially ONE expected result.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Write 10 test cases for a login feature: happy path, boundaries, lockout, XSS attempt.
+2. Find a real bug in any public website; file it professionally (steps, environment, evidence).
+3. Classify 10 sample bugs by severity AND priority; write one sentence defending each split.
+
+## Curated resources
+
+- [ISTQB Foundation syllabus (free PDF)](https://www.istqb.org/certifications/certified-tester-foundation-level) — Standards body · free
+- [Ministry of Testing](https://www.ministryoftesting.com) — Education platform · free articles

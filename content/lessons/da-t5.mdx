@@ -1,0 +1,79 @@
+/* lesson-meta {"topicId":"da-t5","title":"pandas: cleaning & wrangling","minutes":45,"blurb":"Where analysts spend 80% of real project time."} */
+
+pandas is where analysts spend 80% of real project time: cleaning messy exports and reshaping them into answers.
+
+## First contact with any DataFrame
+
+```python
+df.shape            # rows, cols
+df.info()           # dtypes + missing counts — read this first
+df.describe()       # distribution snapshot
+df["region"].value_counts(dropna=False)  # categories incl. NaN
+```
+
+`info()` is the honesty check: dates stored as objects, numbers as strings, silent NaNs — all visible here.
+
+## Missing data: judgment, not just fillna
+
+```python
+df.isna().sum()                    # how much is missing, per column
+
+df["age"] = df["age"].fillna(df["age"].median())  # numeric: median
+df = df.dropna(subset=["order_id"])               # keys: can't impute — drop
+df["notes"] = df["notes"].fillna("")              # text: explicit empty
+```
+
+Each choice is a decision you should be able to defend in a review.
+
+## Groupby: the SQL GROUP BY of Python
+
+```python
+df.groupby("region").agg(
+    revenue=("amount", "sum"),
+    orders=("order_id", "nunique"),
+    avg_order=("amount", "mean"),
+).sort_values("revenue", ascending=False)
+```
+
+## Reshaping: melt and pivot
+
+Wide exports (one column per month) melt into tidy long form before analysis:
+
+```python
+tidy = wide.melt(id_vars="region", var_name="month", value_name="sales")
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "First command on a new DataFrame?",
+      options: ["df.plot()", "df.info() — dtypes and missing counts reveal the real problems", "df.to_csv()", "df.head() only"],
+      answer: 1,
+      why: "Wrong dtypes and hidden NaNs poison every downstream number. info() shows both in one shot.",
+    },
+    {
+      q: "order_id is missing in 2% of rows. Correct handling?",
+      options: ["Fill with the median id", "Drop those rows — a missing key can't be invented", "Fill with 0", "Ignore, pandas handles it"],
+      answer: 1,
+      why: "Identifiers can't be imputed: an invented id corrupts joins and dedupes. Impute measures (medians), drop broken keys.",
+    },
+    {
+      q: "A monthly report arrives with one column per month. Before groupby analysis you…",
+      options: ["Analyze as-is", "melt() to long form: region, month, value rows", "Pivot it again", "Export to Excel"],
+      answer: 1,
+      why: "Tidy long format (each variable a column, each observation a row) is what groupby, merges, and plotting expect.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Take a messy public dataset; document 5 quality issues; fix them in pandas with defensible choices.
+2. Reproduce a SQL GROUP BY query as pandas `groupby().agg()` — outputs must match exactly.
+3. Write one reusable `clean(df)` function: raw in, analysis-ready out — with a docstring of every decision.
+
+## Curated resources
+
+- [pandas: getting started](https://pandas.pydata.org/docs/getting_started/index.html) — Official docs · free
+- [Kaggle: Pandas course](https://www.kaggle.com/learn/pandas) — Education platform · free

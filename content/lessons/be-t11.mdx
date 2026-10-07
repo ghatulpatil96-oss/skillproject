@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"be-t11","title":"DSA essentials for interviews","minutes":50,"blurb":"30 focused hours on patterns beats 300 scattered hours on random problems."} */
+
+DSA interviews are a filter, not the job — but the filter is real. Focused hours on patterns beat scattered hours on random problems.
+
+## The patterns that cover most questions
+
+**Two pointers** (sorted arrays, pairs):
+
+```js
+function hasPairSum(arr, target) {        // arr sorted
+  let lo = 0, hi = arr.length - 1;
+  while (lo < hi) {
+    const s = arr[lo] + arr[hi];
+    if (s === target) return true;
+    s < target ? lo++ : hi--;
+  }
+  return false;
+}
+```
+
+**Frequency map** (counts, duplicates, anagrams):
+
+```js
+const counts = new Map();
+for (const ch of s) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+```
+
+**Sliding window** (longest substring with constraint):
+
+```js
+function longestUnique(s) {
+  const seen = new Map();
+  let start = 0, best = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (seen.has(s[i]) && seen.get(s[i]) >= start) start = seen.get(s[i]) + 1;
+    seen.set(s[i], i);
+    best = Math.max(best, i - start + 1);
+  }
+  return best;
+}
+```
+
+Plus: binary search (on the answer, not just arrays), BFS/DFS on trees/graphs, and stack patterns (matching, monotonic).
+
+## The method interviewers grade
+
+UMPIRE-style, out loud: **U**nderstand (clarify, constraints) → **M**atch (which pattern?) → **P**lan (steps before code) → **I**mplement (clean) → **M**onitor (test, edge cases). The narration is the product.
+
+## Big-O out loud
+
+"Hash map lookup is O(1) average, so overall O(n) time, O(n) space" — say the time AND space, every time.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Two-sum on a sorted array, optimal approach?",
+      options: ["Nested loops O(n²)", "Two pointers from both ends O(n)", "Sort it again", "Binary search every element O(n log n)"],
+      answer: 1,
+      why: "Sorted enables the two-pointer sweep: too small → lo++, too big → hi––. O(n) time, O(1) space.",
+    },
+    {
+      q: "You're asked for the longest substring without repeating characters. The pattern is…",
+      options: ["Binary search", "Sliding window with a seen-set", "Stack", "DFS"],
+      answer: 1,
+      why: "A window that grows right and shrinks left on duplicates — the canonical sliding-window problem.",
+    },
+    {
+      q: "In an interview, you should state complexity…",
+      options: ["Only if asked", "For time AND space, as you design and again at the end", "Never, it's pedantic", "Only the time"],
+      answer: 1,
+      why: "Space is forgotten constantly and it's half the tradeoff discussion — saying both is the senior tell.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Work the NeetCode roadmap's easy + medium sets **by pattern**, not by count.
+2. For every problem: brute force first, then optimize, then explain the tradeoff aloud.
+3. 10 timed mock problems; record yourself; review the narration, not just correctness.
+
+## Curated resources
+
+- [NeetCode practice roadmap](https://neetcode.io/roadmap) — Education platform · free
+- [freeCodeCamp: JS Algorithms & Data Structures](https://www.freecodecamp.org/learn) — Education platform · free

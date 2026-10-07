@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-sans: "Inter";
+  --font-mono: "IBM Plex Mono";
+}
+
+body {
+  @apply bg-page text-ink antialiased;
+}
+
+/* film-grain paper texture over everything (below sticky chrome) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E"
+  );
+}
+
+/* display headings: Inter, big, tight — the Nomu voice */
+h1, h2 {
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+/* tabular numbers wherever stats/timers render */
+.tnum {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+}
+
+/* thin scrollbars for the panel columns */
+.nice-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.nice-scroll::-webkit-scrollbar-thumb {
+  background: #ecd9cc;
+  border-radius: 3px;
+}
+.nice-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* marquee for the hiring-companies ticker */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee { animation: none; }
+}
+
+/* ---------- reusable primitives ---------- */
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-canvas shadow-card;
+  }
+  .btn-primary {
+    @apply inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-accent px-6 text-sm font-semibold text-white transition hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50;
+  }
+  .btn-dark {
+    @apply inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-charcoal px-6 text-sm font-semibold text-canvas transition hover:bg-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-line bg-canvas px-5 text-sm font-medium text-ink transition hover:border-ink hover:shadow-card-lift focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+  .input {
+    @apply h-11 w-full rounded-full border border-line bg-canvas px-5 text-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15;
+  }
+  .label {
+    @apply mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold;
+  }
+}

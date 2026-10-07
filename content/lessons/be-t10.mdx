@@ -1,0 +1,81 @@
+/* lesson-meta {"topicId":"be-t10","title":"Caching with Redis, queues","minutes":35,"blurb":"Speed and scale come from not doing work twice."} */
+
+Speed and scale come from not doing work twice. Caching and queues are the two tools every backend engineer reaches for when the database becomes the bottleneck.
+
+## Cache-aside in four lines
+
+```js
+async function getJob(id) {
+  const cached = await redis.get(`job:${id}`);
+  if (cached) return JSON.parse(cached);        // hit
+
+  const job = await db.job.find(id);            // miss → DB
+  await redis.set(`job:${id}`, JSON.stringify(job), "EX", 300); // 5-min TTL
+  return job;
+}
+```
+
+App checks cache → DB on miss → populate. TTL bounds staleness; **invalidation on write** is the hard part (`redis.del("job:42")` after update).
+
+## What to cache (and not)
+
+Good: read-heavy, rarely-changing, expensive-to-compute — job listings, product pages, computed leaderboards.
+Bad: user-specific data without a user-scoped key, anything written-then-read-immediately, auth checks.
+
+## Rate limiting: the counter pattern
+
+```js
+const key = `rl:${ip}:${Math.floor(Date.now() / 60000)}`; // per-minute window
+const hits = await redis.incr(key);
+if (hits === 1) await redis.expire(key, 60);
+if (hits > 100) return res.status(429).json({ error: "Slow down" });
+```
+
+## Queues: slow work leaves the request
+
+Sending email takes 800ms — inside a request handler that's a slow API for everyone:
+
+```js
+// handler: enqueue and respond immediately (202 Accepted)
+await emailQueue.add("welcome", { userId: user.id });
+
+// separate worker process: does the slow work, retries on failure
+new Worker("welcome", async (job) => sendWelcomeEmail(job.data.userId));
+```
+
+Retries with backoff, idempotent jobs (safe to run twice), and monitoring the queue depth — that's production.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "The hardest part of caching is…",
+      options: ["Choosing Redis vs Memcached", "Invalidation — keeping cached data from going stale", "Memory prices", "Serialization speed"],
+      answer: 1,
+      why: "There are only two hard things in CS: cache invalidation and naming things. Writes must update/delete the affected keys.",
+    },
+    {
+      q: "Why move email sending into a queue?",
+      options: ["Emails are illegal in requests", "The API responds fast; the worker handles retries and failures independently", "Redis requires it", "To use less bandwidth"],
+      answer: 1,
+      why: "Slow, failure-prone work in request paths hurts every caller. 202 + queue decouples latency from reliability.",
+    },
+    {
+      q: "A queue job must be idempotent, meaning…",
+      options: ["It runs once ever", "Running it twice has the same effect as once (safe under retries)", "It needs two workers", "It caches its own result"],
+      answer: 1,
+      why: "Queues retry on failure (at-least-once delivery). Jobs that double-send on retry are a production incident.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Add Redis (or in-memory) caching to one slow endpoint; measure before/after with curl timing.
+2. Implement the fixed-window rate limiter above as Express middleware; test the 429.
+3. Move email sending out of a request handler into a queue job; kill the worker mid-job and watch the retry.
+
+## Curated resources
+
+- [Redis documentation](https://redis.io/docs/latest/) — Official docs · free
+- [BullMQ docs](https://docs.bullmq.io/) — Official docs · free

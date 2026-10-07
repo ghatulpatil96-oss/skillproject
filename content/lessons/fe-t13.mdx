@@ -1,0 +1,81 @@
+/* lesson-meta {"topicId":"fe-t13","title":"Performance: lazy loading, memoization","minutes":35,"blurb":"Core Web Vitals, code-splitting, and measured optimization — performance is a portfolio differentiator."} */
+
+Performance is a feature recruiters can feel. Lighthouse scores, loading behavior, and perceived speed are differentiators you can quantify in interviews.
+
+## The three numbers to know
+
+- **LCP** (Largest Contentful Paint) — how fast the main content appears. Target < 2.5s.
+- **INP** (Interaction to Next Paint) — responsiveness to taps/clicks. Target < 200ms.
+- **CLS** (Cumulative Layout Shift) — visual stability. Target < 0.1.
+
+## Code-splitting: ship what the page needs
+
+```jsx
+const Checkout = lazy(() => import("./Checkout"));
+
+<Suspense fallback={<Skeleton />}>
+  <Checkout />
+</Suspense>
+```
+
+The heaviest components (charts, editors, admin panels) don't belong in the first bundle. Route-level splitting is the easiest 30–50% win.
+
+## Images: the usual #1 problem
+
+```html
+<!-- sized to avoid CLS, lazy when below the fold -->
+<img
+  src="/photo-800.webp"
+  alt="Team at work"
+  width="800" height="600"
+  loading="lazy"
+/>
+```
+
+Missing `width`/`height` is the #1 cause of layout shift; missing `loading="lazy"` wastes half your bandwidth.
+
+## Memoization: where measured, not vibes
+
+```jsx
+const sorted = useMemo(
+  () => [...items].sort(expensiveCompare),
+  [items]
+);
+```
+
+Memoize expensive computations and referential-identity-sensitive props. Measure with the React Profiler and Lighthouse **before and after** — "before/after numbers" is exactly what interviews want to hear.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "A page's images jump around as they load. Which metric is suffering?",
+      options: ["LCP", "INP", "CLS", "TTFB"],
+      answer: 2,
+      why: "Layout shift = CLS. Reserve space with width/height (or aspect-ratio) to fix it.",
+    },
+    {
+      q: "Fastest first win for a bloated initial bundle?",
+      options: ["Rewrite in vanilla JS", "Route-level code-splitting with React.lazy", "Compress all images more", "Add a service worker"],
+      answer: 1,
+      why: "Lazy-load routes not on the first screen; the initial bundle shrinks immediately with minimal risk.",
+    },
+    {
+      q: "useMemo everywhere is…",
+      options: ["Best practice", "A cost — memoize where measured, especially for identity-sensitive children or expensive computes", "Required by React 18", "Only for arrays"],
+      answer: 1,
+      why: "Memoization itself costs memory and comparison work. Profile first, optimize the hot paths.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Run Lighthouse on your portfolio; fix the top 3 issues; re-run and record the delta.
+2. Lazy-load your heaviest component and measure the bundle change (build output shows it).
+3. Add `width`/`height` to every image and watch CLS drop to ~0.
+
+## Curated resources
+
+- [web.dev: Learn Performance](https://web.dev/learn/performance) — Google · free
+- [web.dev: Core Web Vitals](https://web.dev/vitals) — Google · free

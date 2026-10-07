@@ -1,0 +1,66 @@
+/* lesson-meta {"topicId":"da-t2","title":"Statistics fundamentals","minutes":40,"blurb":"How analysts avoid lying to themselves — and to their stakeholders."} */
+
+Statistics is how analysts avoid lying to themselves. Descriptive stats, distributions, and the anatomy of A/B tests are the daily toolkit.
+
+## Mean vs median: when averages lie
+
+Salaries: 9 people earn ₹40k, one founder earns ₹40L.
+
+- Mean = ₹4.36L — "the average salary is 4.36 lakhs!" (technically true, usefully wrong)
+- Median = ₹40k — what the typical person earns
+
+**Skewed data (income, prices, session times) → report the median.** The mean is for symmetric data. Interviewers love this question because it separates people who run functions from people who think.
+
+## Spread tells you if the center matters
+
+Standard deviation near zero → the mean describes everyone. Huge SD → the mean describes nobody. Report both: "median ₹40k, IQR ₹36–44k" beats any single number.
+
+## Correlation ≠ causation (say it with examples)
+
+- Ice cream sales correlate with drowning deaths. (Confounder: summer.)
+- Countries with more Nobel laureates consume more chocolate. (Confounder: GDP.)
+
+The analyst's job is asking *"what else could explain this?"* before announcing a cause.
+
+## A/B test anatomy
+
+1. **Hypothesis**: "New checkout reduces cart abandonment"
+2. **Random split**: A (control) vs B (treatment) — no peeking at segments
+3. **Sample size first**: too-small samples produce confident noise
+4. **One metric, decided in advance** — metric-shopping after the fact is p-hacking
+5. **Significance**: p < 0.05 means "surprising if there were no effect" — not "95% certain it works"
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Revenue data with a few huge enterprise clients. Best 'typical' measure?",
+      options: ["Mean", "Median", "Mode", "Max"],
+      answer: 1,
+      why: "Skewed distributions: the median resists outliers; the mean gets dragged by the few big values.",
+    },
+    {
+      q: "Cities with more police have more crime. The most likely explanation?",
+      options: ["Police cause crime", "Confounding — bigger cities have both", "Coincidence", "Bad data only"],
+      answer: 1,
+      why: "Population size confounds both. This is the canonical correlation-vs-causation trap.",
+    },
+    {
+      q: "An A/B test shows +5% conversion with p = 0.03. Correct reading?",
+      options: ["95% chance B is better", "If there were truly no effect, a result this extreme would occur ~3% of the time", "B is 3% better", "The test is broken"],
+      answer: 1,
+      why: "p-values quantify surprise under the null hypothesis — not the probability that the hypothesis is true.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Take any public dataset: compute mean/median/SD; plot the histogram; decide which center to report and why.
+2. Find one misleading news chart (truncated axis, cherry-picked window) and write 3 sentences on the distortion.
+3. Critique a real A/B test writeup: what's missing (sample size? pre-registered metric? segment peeking?).
+
+## Curated resources
+
+- [Khan Academy: Statistics & probability](https://www.khanacademy.org/math/statistics-probability) — Education platform · free
+- [Seeing Theory](https://seeing-theory.brown.edu) — Brown University · free

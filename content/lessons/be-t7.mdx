@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"be-t7","title":"ORMs & schema design","minutes":35,"blurb":"Type-safe queries — but only if you understand the SQL they generate."} */
+
+ORMs give type-safe, composable queries — but only pay off if you understand the SQL they generate. Schema design is where juniors can contribute real value early.
+
+## The schema IS the design
+
+```prisma
+model Job {
+  id        String   @id @default(cuid())
+  title     String
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String
+  skills    JobSkill[]
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}
+
+model JobSkill {
+  job      Job    @relation(fields: [jobId], references: [id])
+  jobId    String
+  skillId  String
+  minScore Int
+  @@id([jobId, skillId])  // composite PK = no duplicates
+}
+```
+
+Many-to-many with extra data (minScore) needs an explicit join model. Constraints in the schema beat "we check in code" every time.
+
+## Queries: avoiding N+1
+
+```js
+// ❌ N+1: one query for jobs, then ONE PER JOB for skills
+const jobs = await prisma.job.findMany();
+for (const j of jobs) {
+  j.skills = await prisma.jobSkill.findMany({ where: { jobId: j.id } });
+}
+
+// ✅ one query, joined in
+const jobs = await prisma.job.findMany({ include: { skills: true } });
+```
+
+N+1 is the #1 ORM performance bug — recognize it in code review.
+
+## Migration discipline
+
+```bash
+npx prisma migrate dev --name add-job-skills
+```
+
+Small, named, reviewable migrations. Adding a column? Make it nullable, backfill, then constrain — never break the running version.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "N+1 means…",
+      options: ["N queries plus 1 backup", "1 query for the list + 1 per row for relations, executed in a loop", "A SQL injection pattern", "An index on N columns"],
+      answer: 1,
+      why: "The loop issues one query per item. Eager loading (include/join) collapses it into one query.",
+    },
+    {
+      q: "Adding a required column to a busy table safely?",
+      options: ["Add NOT NULL immediately", "Add nullable → backfill in batches → enforce NOT NULL", "Rename the table", "Drop and recreate"],
+      answer: 1,
+      why: "Three steps keep the old version working while data catches up — zero-downtime migrations 101.",
+    },
+    {
+      q: "Composite primary key @@id([jobId, skillId]) gives you…",
+      options: ["Faster reads only", "Automatic uniqueness of the pair — no duplicate skill rows per job", "A JSON column", "Automatic indexes on both columns separately"],
+      answer: 1,
+      why: "The pair must be unique together — the database enforces what code might forget.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Model the blog schema from Stage-2 (users, posts, comments, tags) in Prisma; run migrations.
+2. Write a query that would be N+1, then fix it with `include` — feel the difference.
+3. Add a column without downtime: nullable first, backfill script, then constrain.
+
+## Curated resources
+
+- [Prisma: getting started](https://www.prisma.io/docs/getting-started) — Official docs · free
+- [Prisma: relations](https://www.prisma.io/docs/orm/prisma-schema/data-model/relations) — Official docs · free

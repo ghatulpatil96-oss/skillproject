@@ -1,0 +1,92 @@
+/* lesson-meta {"topicId":"qa-t4","title":"Playwright / Selenium basics","minutes":45,"blurb":"The modern browser-automation standard: fast, reliable, with auto-waiting that kills flakiness."} */
+
+Playwright is the modern browser-automation standard: fast, reliable, with auto-waiting that eliminates most of the flakiness pain in older tools. Selenium remains everywhere in legacy suites — know both, lead with Playwright.
+
+## A test that reads like a spec
+
+```js
+import { test, expect } from "@playwright/test";
+
+test("customer can complete checkout", async ({ page }) => {
+  await page.goto("/shop");
+  await page.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByTestId("cart-link").click();
+  await page.getByRole("button", { name: "Checkout" }).click();
+
+  await expect(page.getByRole("heading", { name: "Order placed" })).toBeVisible();
+});
+```
+
+## Auto-waiting replaces sleep()
+
+Playwright waits for elements to be visible, enabled, and stable before acting. Hardcoded sleeps are the #1 source of slow, flaky suites:
+
+```js
+await page.waitForTimeout(3000);   // ❌ slow even when instant, fast when not
+await expect(page.getByText("Saved")).toBeVisible();  // ✅ deterministic
+```
+
+## Page Object Model: suites that scale
+
+```js
+class CheckoutPage {
+  constructor(page) { this.page = page; }
+  async completePurchase(item) {
+    await page.getByRole("button", { name: "Add to cart" }).click();
+    await page.getByRole("button", { name: "Checkout" }).click();
+  }
+}
+```
+
+UI changes mean editing one class, not 40 tests.
+
+## Config: browsers and traces
+
+```js
+// playwright.config.js
+export default {
+  use: {
+    trace: "on-first-retry",       // debug gold on failure
+    screenshot: "only-on-failure",
+  },
+  projects: [
+    { name: "chromium", use: devices["Desktop Chrome"] },
+    { name: "firefox",  use: devices["Desktop Firefox"] },
+  ],
+};
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why is waitForTimeout(3000) technical debt?",
+      options: ["It's deprecated API", "It's always 3s (slow) yet can still race (flaky) — it waits a fixed time, not a condition", "It only works in Chromium", "It disables screenshots"],
+      answer: 1,
+      why: "Worst of both worlds: pays 3s even when ready, still fails when the app takes 3.2s. Wait on conditions instead.",
+    },
+    {
+      q: "The Page Object Model pays off when…",
+      options: ["You have one test", "Multiple tests share flows — a UI change updates one class instead of dozens of tests", "Tests are short", "You use Selenium only"],
+      answer: 1,
+      why: "It centralizes selectors and flows; duplication is what makes suites unmaintainable.",
+    },
+    {
+      q: "trace: 'on-first-retry' gives you…",
+      options: ["Faster tests", "A full timeline (screenshots, network, DOM) of the failed attempt for debugging", "Video of passing runs", "Nothing without Docker"],
+      answer: 1,
+      why: "The trace viewer replays the failure step-by-step — debugging that takes minutes instead of guesswork.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Automate 5 flows on a demo store (search, add to cart, checkout) using the Page Object Model.
+2. Run the suite in Chromium AND Firefox; fix one browser-specific failure.
+3. Enable trace-on-failure; break a test intentionally; debug it via the trace viewer.
+
+## Curated resources
+
+- [Playwright docs](https://playwright.dev/docs/intro) — Official docs · free
+- [Selenium documentation](https://www.selenium.dev/documentation/) — Official docs · free

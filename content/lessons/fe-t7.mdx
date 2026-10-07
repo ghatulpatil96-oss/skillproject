@@ -1,0 +1,88 @@
+/* lesson-meta {"topicId":"fe-t7","title":"Async JS: promises, fetch, async/await","minutes":45,"blurb":"How single-threaded JavaScript waits without freezing — the mental model plus the patterns."} */
+
+JavaScript is single-threaded, so all waiting (network, timers, files) happens asynchronously. Promises and async/await are how modern code stays readable while doing many things at once.
+
+## The mental model in one paragraph
+
+The call stack runs your code. Waiting work (fetch, timers) is handed to the browser; when it finishes, the callback is queued and the event loop pushes it onto the stack **only when the stack is empty**. That's why a `while(true){}` blocks everything — the loop can't run.
+
+## async/await with real error handling
+
+```js
+async function loadUser(id) {
+  try {
+    const res = await fetch(`/api/users/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`); // fetch doesn't throw on 404!
+    return await res.json();
+  } catch (err) {
+    console.error("loadUser failed:", err);
+    throw err; // let the caller decide UI
+  }
+}
+```
+
+The `res.ok` check is the most-forgotten line in JavaScript.
+
+## Parallel vs sequential — the performance difference
+
+```js
+// ❌ 3 round-trips, one after another
+const a = await fetchA(); // 300ms
+const b = await fetchB(); // 300ms
+const c = await fetchC(); // 300ms
+
+// ✅ all three at once, ~300ms total
+const [ra, rb, rc] = await Promise.all([fetchA(), fetchB(), fetchC()]);
+```
+
+`Promise.all` fails fast on any rejection; `allSettled` waits and reports each outcome — use it when partial results are fine.
+
+## Aborting: effects and timeouts
+
+```js
+const ctrl = new AbortController();
+setTimeout(() => ctrl.abort(), 5000); // timeout
+const res = await fetch(url, { signal: ctrl.signal });
+```
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "fetch() resolves successfully on a 404 response. What do you add?",
+      options: ["try/catch is enough", "if (!res.ok) throw new Error(res.status)", "response.onerror", "Nothing — 404 auto-throws"],
+      answer: 1,
+      why: "fetch only rejects on network failure; HTTP error statuses must be checked via res.ok / res.status.",
+    },
+    {
+      q: "Three independent fetches, each ~300ms. await-ing them sequentially takes…",
+      options: ["~300ms", "~600ms", "~900ms", "Depends on the server"],
+      answer: 2,
+      why: "Sequential await runs them one after another. Promise.all starts all three immediately: ~300ms total.",
+    },
+    {
+      q: "Which waits for all promises and gives every outcome (fulfilled or rejected)?",
+      options: ["Promise.all", "Promise.race", "Promise.allSettled", "Promise.any"],
+      answer: 2,
+      why: "allSettled never short-circuits — it reports {status, value/reason} per promise. all rejects fast.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Fetch data from a public API (e.g. GitHub users) and render a list with loading and error states.
+2. Convert a callback-style function to Promise-based, then to async/await — feel the readability change.
+3. Run 3 fetches in parallel with `Promise.all`, then handle partial failure with `allSettled`.
+
+## Curated resources
+
+- [MDN: Async JavaScript](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous) — MDN · free
+- [javascript.info: Promises, async/await](https://javascript.info/async) — Education platform · free
+- [MDN: Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) — MDN · free
+
+## Common mistakes interviewers spot
+
+- `.then` without error handling (unhandled rejections)
+- `await` inside loops where `Promise.all` was intended
+- Forgetting the `res.ok` check after fetch

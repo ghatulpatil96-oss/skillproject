@@ -1,0 +1,70 @@
+/* lesson-meta {"topicId":"da-t6","title":"Visualization: matplotlib & seaborn","minutes":35,"blurb":"Charts are arguments — choose the encoding that makes your point undeniable."} */
+
+Charts are arguments. Choosing the right encoding — and deleting everything else — is how analysis persuades.
+
+## The encoding hierarchy
+
+Perception research ranks how accurately humans read encodings:
+
+**position (bars) > length > angle (pies) > color**
+
+This is why "compare 12 categories" means a sorted bar chart, never a pie: humans can't compare 12 angles, but instantly compare sorted bar lengths.
+
+## matplotlib: anatomy, then defaults
+
+```python
+fig, ax = plt.subplots(figsize=(8, 4.5))
+ax.bar(region_rev.index, region_rev.values, color="#1B5633")
+ax.set_title("Revenue by region, Q3 2026", loc="left", fontweight="bold")
+ax.spines[["top", "right"]].set_visible(False)
+ax.yaxis.set_major_formatter(FormatStrFormatter("₹%dL"))
+```
+
+Title states the **finding**, not the variables ("Revenue concentrated in West region" beats "Revenue vs region").
+
+## seaborn: statistical plots in one line
+
+```python
+sns.histplot(df, x="order_value", bins=30)        # distribution
+sns.heatmap(pivot, annot=True, fmt=".0f", cmap="Greens")  # matrix
+sns.boxplot(df, x="region", y="order_value")      # spread + outliers
+```
+
+## Delete before you present
+
+Gridlines beyond the faintest, legends when direct labels work, dual axes (almost always misleading), 3D anything. Every pixel must earn its place.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Most accurate way for humans to compare 12 category values?",
+      options: ["Pie chart", "Sorted horizontal bar chart", "Radar chart", "Color-coded table"],
+      answer: 1,
+      why: "Length/position along a common scale is what visual perception does best; angle comparison (pies) fails beyond ~3 slices.",
+    },
+    {
+      q: "The chart title should state…",
+      options: ["The variable names", "The finding — what the reader should conclude", "The data source only", "The chart type"],
+      answer: 1,
+      why: "\"Churn doubled after the pricing change\" directs attention; \"Churn vs month\" makes the reader do the work.",
+    },
+    {
+      q: "Dual y-axes (two scales on one chart) are risky because…",
+      options: ["They're unreadable", "Arbitrary scaling of each axis can manufacture or hide any correlation", "Excel can't make them", "They use two colors"],
+      answer: 1,
+      why: "Pick the zero-point and ranges and you can make two unrelated series look perfectly (anti)correlated.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Visualize one variable three ways; pick the best and defend it in two sentences.
+2. Recreate a "broken" chart (12-slice pie) as a clear sorted bar chart.
+3. Build a small-multiples grid (one subplot per region, shared y-axis) comparing 4 segments.
+
+## Curated resources
+
+- [matplotlib tutorials](https://matplotlib.org/stable/tutorials/index.html) — Official docs · free
+- [seaborn tutorial](https://seaborn.pydata.org/tutorial.html) — Official docs · free

@@ -1,0 +1,98 @@
+/* lesson-meta {"topicId":"fe-t2","title":"CSS: box model, flexbox, grid","minutes":45,"blurb":"Three tools behind every layout on the web — master them and no design is out of reach."} */
+
+The box model, flexbox, and grid are the three tools behind every layout. Master these and you can build any design; skip them and you'll fight framework code you don't understand.
+
+## The box model, properly
+
+Every element is a box: content, padding, border, margin. The one line that fixes 90% of beginner layout bugs is switching to the intuitive sizing rule:
+
+```css
+/* width now includes padding + border — what you expect */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+```
+
+## Specificity: why your CSS "doesn't work"
+
+When two rules target the same element, the more specific one wins: inline styles beat IDs, IDs beat classes, classes beat elements. `!important` is a confession that specificity got out of hand — avoid it.
+
+```css
+/* specificity: 0-1-1 (one class, one element) */
+.card .title { color: green; }
+
+/* 0-0-1 — loses to the rule above, even though it's later */
+h3 { color: red; }
+```
+
+## Flexbox: one-dimensional layouts
+
+Rows or columns, with the most powerful alignment tools in CSS:
+
+```css
+.toolbar {
+  display: flex;
+  align-items: center;   /* cross-axis */
+  justify-content: space-between; /* main-axis */
+  gap: 12px;             /* replaces margin hacks */
+}
+```
+
+## Grid: two-dimensional layouts
+
+When rows AND columns must line up, grid is the tool:
+
+```css
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+```
+
+That one line is a responsive card gallery — no media queries needed.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "With box-sizing: border-box, a width: 200px element with 10px padding on each side is how wide in total?",
+      options: ["220px", "200px", "180px", "Depends on margin"],
+      answer: 1,
+      why: "border-box makes the declared width include padding and border — the box stays exactly 200px.",
+    },
+    {
+      q: "Which selector wins: .card .title vs h3?",
+      options: ["h3, because elements always win", ".card .title, higher specificity", "Whichever is written last, always", "They can't both apply"],
+      answer: 1,
+      why: "Two selectors = (0,1,1) beats (0,0,1). Source order only decides between EQUAL specificities.",
+    },
+    {
+      q: "A photo gallery needs cards that wrap onto new rows and fill available width. Best tool?",
+      options: ["display: flex with flex-wrap", "grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))", "float: left on every card", "position: absolute math"],
+      answer: 1,
+      why: "auto-fill + minmax handles wrapping AND equal column sizing automatically; flex-wrap can't keep columns aligned across rows.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Recreate a 3-column card layout with **both** flexbox and grid — feel the difference in how each distributes space.
+2. Build the classic holy-grail layout (header, sidebar, main, footer) from memory.
+3. Open a site you admire in DevTools and predict which element is which flex/grid child — then check.
+
+## Curated resources
+
+- [web.dev: Learn CSS](https://web.dev/learn/css) — Google · free
+- [MDN: CSS layout](https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout) — MDN · free
+- [Flexbox Froggy](https://flexboxfroggy.com) — practice game · free
+- [Grid Garden](https://cssgridgarden.com) — practice game · free
+
+## Common mistakes interviewers spot
+
+- Missing `box-sizing` reset, then fighting mystery overflow
+- `!important` wars instead of fixing specificity
+- Absolute-positioning everything instead of using layout systems

@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"fe-t6","title":"DOM manipulation & events","minutes":40,"blurb":"Understand what frameworks do for you — the live object model of the page."} */
+
+The DOM is the live object model of the page. Frameworks abstract it, but every React error you'll ever debug makes more sense when you understand what the framework does underneath.
+
+## Selecting and changing
+
+```js
+const btn = document.querySelector("#submit");
+btn.textContent = "Saving…";        // safe text
+btn.classList.add("is-loading");    // style via classes, not inline
+```
+
+Prefer `textContent` over `innerHTML` with anything user-provided — `innerHTML` is an XSS hole.
+
+## Events and delegation
+
+Attaching one listener to a container instead of one per item is the pattern behind every list UI:
+
+```js
+document.querySelector("#todos").addEventListener("click", (e) => {
+  const item = e.target.closest("li");
+  if (!item) return;
+  item.classList.toggle("done");
+});
+```
+
+Works for items added later, too — no re-binding.
+
+## A vanilla todo list (the exercise)
+
+```js
+const form = document.querySelector("#add-form");
+const list = document.querySelector("#todos");
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = form.querySelector("input");
+  const li = document.createElement("li");
+  li.textContent = input.value.trim() || "Untitled";
+  list.append(li);
+  form.reset();
+});
+```
+
+Build this from memory. Then add filtering (all/active/done) and a delete button — still zero frameworks.
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "Why is textContent safer than innerHTML for user input?",
+      options: ["It's faster", "innerHTML parses markup — <img onerror=...> from a user becomes an attack (XSS)", "textContent auto-escapes emoji", "No difference"],
+      answer: 1,
+      why: "innerHTML interprets HTML; a user string containing <script>-ish markup executes. textContent inserts it as inert text.",
+    },
+    {
+      q: "Event delegation means…",
+      options: ["One listener on a parent handles events for current AND future children", "Multiple listeners per child", "Events handled on the server", "Using capture phase only"],
+      answer: 0,
+      why: "Events bubble; the parent checks e.target. New children are covered automatically — no rebinding.",
+    },
+    {
+      q: "querySelectorAll returns…",
+      options: ["A live NodeList that updates with the DOM", "A static NodeList — a snapshot", "An array", "A single element"],
+      answer: 1,
+      why: "It's static: elements added later won't appear. getElementsByClassName IS live — a classic interview trap.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Build a todo list in vanilla JS — no frameworks allowed.
+2. Add filtering (all/active/done) using event delegation, not per-item listeners.
+3. Build a modal from scratch: open, close, Escape key, click-outside, focus trap.
+
+## Curated resources
+
+- [MDN: Introduction to events](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events) — MDN · free
+- [javascript.info: Document](https://javascript.info/document) — Education platform · free
+
+## Common mistakes interviewers spot
+
+- 100 listeners instead of 1 delegated listener
+- `innerHTML` with user input (XSS) instead of `textContent`
+- Assuming `querySelectorAll` results update automatically

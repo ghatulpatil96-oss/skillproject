@@ -1,0 +1,86 @@
+/* lesson-meta {"topicId":"fe-t12","title":"State management (Context / Zustand)","minutes":35,"blurb":"Server state, global client state, local state — put each kind where it belongs."} */
+
+As apps grow, prop drilling hurts and server-cache state needs tools. The professional rule: **server state** (TanStack Query), **global client state** (Context or Zustand), **local state** (useState).
+
+## Context: built-in, but watch the re-renders
+
+```jsx
+const ThemeCtx = createContext(null);
+
+function App() {
+  // ❌ new object every render → every consumer re-renders
+  // <ThemeCtx.Provider value={{ theme, setTheme }}>
+
+  // ✅ memoized value object
+  const value = useMemo(() => ({ theme, setTheme }), [theme]);
+  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
+}
+
+function Button() {
+  const { theme } = useContext(ThemeCtx);
+  return <button className={theme}>Click</button>;
+}
+```
+
+Context is a broadcast to every consumer. Fine for low-frequency values (theme, auth user) — painful for fast-changing ones (keystrokes, hover).
+
+## Zustand: stores without ceremony
+
+```jsx
+import { create } from "zustand";
+
+const useCart = create((set) => ({
+  items: [],
+  add: (item) => set((s) => ({ items: [...s.items, item] })),
+}));
+
+// component — selector limits re-renders to what you read
+const count = useCart((s) => s.items.length);
+const add = useCart((s) => s.add);
+```
+
+No provider, no boilerplate, selectors keep re-renders surgical.
+
+## The decision table
+
+| State | Home |
+|---|---|
+| Server data (jobs, profile) | Query cache (TanStack Query) |
+| Auth user, theme | Context |
+| Cart, UI preferences | Zustand store |
+| Form inputs, toggles | useState in the component |
+
+<Quiz
+  title="Check yourself"
+  questions={[
+    {
+      q: "A context value created inline ({theme, setTheme}) causes…",
+      options: ["Nothing", "Every consumer to re-render on every provider render", "A memory leak", "StrictMode warnings only"],
+      answer: 1,
+      why: "A new object reference each render tells every consumer 'context changed' — memoize the value.",
+    },
+    {
+      q: "Fast-changing state (search keystrokes) belongs in…",
+      options: ["Global context", "Local useState (or the input's own handling)", "Zustand global store", "URL params always"],
+      answer: 1,
+      why: "Broadcasting keystrokes re-renders every consumer. Keep it local; lift or share only when truly needed.",
+    },
+    {
+      q: "Fetched job listings are best held in…",
+      options: ["A query cache keyed by the request", "One giant useState", "localStorage", "Context value"],
+      answer: 0,
+      why: "Server state needs caching, invalidation, and deduping — that's TanStack Query's (or a loader's) job, not yours.",
+    },
+  ]}
+/>
+
+## Practice — do these, don't just read
+
+1. Extract a theme/auth context; measure re-renders with React DevTools Profiler.
+2. Replace one prop-drilled value with a Zustand store + selector.
+3. Write a one-paragraph "state inventory" of your app: what lives where and why.
+
+## Curated resources
+
+- [React docs: Scaling up with reducer & context](https://react.dev/learn/scaling-up-with-reducer-and-context) — Official docs · free
+- [Zustand docs](https://github.com/pmndrs/zustand) — Official docs · free
