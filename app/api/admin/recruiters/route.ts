@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getUserFromToken, publicUser, recruitersWithStatus, setRecruiterVerified, tokenFromRequest, DEMO_MODE } from "@/lib/auth";
-import { PENDING_RECRUITERS } from "@/lib/roles";
+import { getUserFromToken, publicUser, recruitersWithStatus, setRecruiterVerified, tokenFromRequest } from "@/lib/auth";
+import { assertSameOrigin, readJson } from "@/lib/security";
 import { sendEmail, templates } from "@/lib/email";
 
 async function requireAdmin(req: Request) {
@@ -16,25 +16,9 @@ export async function GET(req: Request) {
   }
 
   const users = await recruitersWithStatus();
-  const real = users.map((u) => ({
-    ...publicUser(u),
-    demo: false as const,
-  }));
-
-  // In demo mode, merge the seed queue rows that don't match a real account,
-  // clearly labelled demo — they exercise the review UI but can't be approved.
-  const demoRows = DEMO_MODE
-    ? PENDING_RECRUITERS.filter((p) => !users.some((u) => u.email.toLowerCase() === p.email.toLowerCase())).map((p) => ({
-        id: p.id,
-        name: p.name,
-        email: p.email,
-        company: p.company,
-        verifiedRecruiter: false,
-        demo: true as const,
-      }))
-    : [];
-
-  return NextResponse.json({ recruiters: [...real, ...demoRows] });
+  return NextResponse.json({
+    recruiters: users.map((u) => ({ ...publicUser(u), demo: false as const })),
+  });
 }
 
 /** POST { userId, action: "approve" | "reject" } — sets verifiedRecruiter server-side + emails. */
@@ -42,9 +26,15 @@ export async function POST(req: Request) {
   if (!(await requireAdmin(req))) {
     return NextResponse.json({ error: "Admin access required." }, { status: 401 });
   }
-
-  const { userId, action } = (await req.json()) as { userId?: string; action?: string };
-  if (!userId || (action !== "approve" && action !== "reject")) {
+  if (!(await assertSameOrigin(req))) {
+    return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+  }
+  const body = await readJson<{ userId?: string; action?: string }>(req);
+  if (!body.ok) {
+    return NextResponse.json({ error: "Expected application/json body of at most 10 KB." }, { status: body.status });
+  }
+  const { userId, action } = body.data;
+  if (!userId || typeof userId !== "string" || (action !== "approve" && action !== "reject")) {
     return NextResponse.json({ error: "userId and action (approve|reject) are required." }, { status: 400 });
   }
 
@@ -53,7 +43,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Recruiter not found." }, { status: 404 });
   }
 
-  // 📧 decision email sent server-side (never from the browser)
+  // Decision email sent server-side (never from the browser).
   const tpl =
     action === "approve"
       ? templates.recruiterApproved(updated.name, updated.company ?? updated.name)

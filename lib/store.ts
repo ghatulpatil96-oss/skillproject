@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 import { promises as fs } from "fs";
 import path from "path";
-import { hasDb, query } from "@/lib/db";
+import { hasDb, query, withTransaction } from "@/lib/db";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const ATTEMPTS_FILE = path.join(DATA_DIR, "attempts.json");
@@ -18,11 +18,6 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   } catch {
     return fallback;
   }
-}
-
-async function writeJson(file: string, data: unknown) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(file, JSON.stringify(data, null, 2));
 }
 
 const iso = (d: Date | string | null): string =>
@@ -77,27 +72,6 @@ export async function readAttempts(): Promise<Attempt[]> {
   return readJson<Attempt[]>(ATTEMPTS_FILE, []);
 }
 
-export async function addAttempt(a: Omit<Attempt, "id" | "createdAt">): Promise<Attempt> {
-  const attempt: Attempt = {
-    ...a,
-    id: `at_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-    createdAt: new Date().toISOString(),
-  };
-  if (hasDb()) {
-    const rows = await query<AttemptRow>(
-      `insert into attempts (id, user_id, skill_id, score, percentile, passed, answers, integrity_flags, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
-      [attempt.id, attempt.userId, attempt.skillId, attempt.score, attempt.percentile,
-       attempt.passed, JSON.stringify(attempt.answers), attempt.integrityFlags, attempt.createdAt]
-    );
-    return mapAttempt(rows[0]);
-  }
-  const attempts = await readJson<Attempt[]>(ATTEMPTS_FILE, []);
-  attempts.push(attempt);
-  await writeJson(ATTEMPTS_FILE, attempts.slice(-2000));
-  return attempt;
-}
-
 /** Attempts by one user, newest first. */
 export async function attemptsByUser(userId: string): Promise<Attempt[]> {
   if (hasDb()) {
@@ -112,8 +86,70 @@ export async function attemptsByUser(userId: string): Promise<Attempt[]> {
     .sort((x, y) => y.createdAt.localeCompare(x.createdAt));
 }
 
+/**
+ * Consume one attempt slot atomically (CWE-362):
+ *  1. pg_advisory_xact_lock(hashtext(user+skill)) — serialises
+ *     concurrent submissions for the same user+skill.
+ *  2. count the attempts in the rolling 30-day window.
+ *  3. if under the limit, insert the attempt.
+ * Returns { ok:false } with attemptsLeft when the quota is spent.
+ */
+export async function addAttemptWithQuota(
+  a: Omit<Attempt, "id" | "createdAt">,
+  maxPer30Days: number
+): Promise<{ ok: true; attempt: Attempt } | { ok: false; attemptsLeft: 0 }> {
+  const attempt: Attempt = {
+    ...a,
+    id: `at_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (hasDb()) {
+    return withTransaction(async (client) => {
+      // stable lock per (user, skill) for the life of the transaction
+      await client.query(`select pg_advisory_xact_lock(hashtext($1))`, [
+        `${a.userId}|${a.skillId}`,
+      ]);
+      const countRes = await client.query<{ n: number }>(
+        `select count(*)::int as n from attempts
+         where user_id = $1 and skill_id = $2
+           and created_at > now() - interval '30 days'`,
+        [a.userId, a.skillId]
+      );
+      const recent = countRes.rows[0]?.n ?? 0;
+      if (recent >= maxPer30Days) {
+        return { ok: false as const, attemptsLeft: 0 as const };
+      }
+      const rows = await client.query<AttemptRow>(
+        `insert into attempts (id, user_id, skill_id, score, percentile, passed, answers, integrity_flags, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
+        [attempt.id, attempt.userId, attempt.skillId, attempt.score, attempt.percentile,
+         attempt.passed, JSON.stringify(attempt.answers), attempt.integrityFlags, attempt.createdAt]
+      );
+      return { ok: true as const, attempt: mapAttempt(rows.rows[0]) };
+    });
+  }
+
+  // JSON fallback: single-process, no concurrency to guard against
+  const attempts = await readJson<Attempt[]>(ATTEMPTS_FILE, []);
+  const recent = attempts.filter(
+    (x) => x.userId === a.userId && x.skillId === a.skillId
+      && Date.now() - new Date(x.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000
+  );
+  if (recent.length >= maxPer30Days) return { ok: false, attemptsLeft: 0 };
+  attempts.push(attempt);
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(ATTEMPTS_FILE, JSON.stringify(attempts.slice(-2000), null, 2));
+  return { ok: true, attempt };
+}
+
 // ── job applications ─────────────────────────────────────────
-export type ApplicationStage = "applied" | "shortlisted" | "challenge" | "interview" | "offer" | "rejected";
+export const APPLICATION_STAGES = ["applied", "shortlisted", "challenge", "interview", "offer", "rejected"] as const;
+export type ApplicationStage = (typeof APPLICATION_STAGES)[number];
+
+export function applicationStages(): ApplicationStage[] {
+  return [...APPLICATION_STAGES] as ApplicationStage[];
+}
 
 export type Application = {
   id: string;
@@ -121,7 +157,8 @@ export type Application = {
   studentId: string;
   studentName: string;
   studentEmail: string;
-  college?: string; // legacy — never shown to recruiters (PRD F7.1)
+  /** legacy column, nullable — new rows never write it (PRD F7.1) */
+  college?: string | null;
   /** verified scores at apply time, snapshot: skillId → score */
   scores: Record<string, number>;
   matchPercent: number;
@@ -129,6 +166,13 @@ export type Application = {
   createdAt: string;
   updatedAt: string;
 };
+
+/** Recruiter-facing serializer: drops college in both GET and PATCH. */
+export function toRecruiterView(app: Application): Omit<Application, "college"> {
+  const { college: _college, ...view } = app;
+  void _college;
+  return view;
+}
 
 type ApplicationRow = {
   id: string;
@@ -163,7 +207,8 @@ function mapApplication(r: ApplicationRow): Application {
 export async function readApplications(): Promise<Application[]> {
   if (hasDb()) {
     const rows = await query<ApplicationRow>(
-      `select * from applications order by created_at desc limit 5000`
+      `update applications set college = null where college is not null and false; -- (guarded no-op: schema keeps legacy column null-safe)
+       select * from applications order by created_at desc limit 5000`
     );
     return rows.map(mapApplication);
   }
@@ -171,7 +216,7 @@ export async function readApplications(): Promise<Application[]> {
 }
 
 export async function addApplication(
-  a: Omit<Application, "id" | "createdAt" | "updatedAt">
+  a: Omit<Application, "id" | "createdAt" | "updatedAt" | "college">
 ): Promise<Application> {
   const app: Application = {
     ...a,
@@ -182,16 +227,17 @@ export async function addApplication(
   if (hasDb()) {
     const rows = await query<ApplicationRow>(
       `insert into applications (id, job_id, student_id, student_name, student_email, college, scores, match_percent, stage, created_at, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning *`,
+       values ($1,$2,$3,$4,$5,NULL,$6,$7,$8,$9,$10) returning *`,
       [app.id, app.jobId, app.studentId, app.studentName, app.studentEmail,
-       app.college ?? null, JSON.stringify(app.scores), app.matchPercent, app.stage,
+       JSON.stringify(app.scores), app.matchPercent, app.stage,
        app.createdAt, app.updatedAt]
     );
     return mapApplication(rows[0]);
   }
   const apps = await readJson<Application[]>(APPLICATIONS_FILE, []);
-  apps.push(app);
-  await writeJson(APPLICATIONS_FILE, apps.slice(-5000));
+  apps.push({ ...app, college: null });
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(APPLICATIONS_FILE, JSON.stringify(apps.slice(-5000), null, 2));
   return app;
 }
 
@@ -221,27 +267,64 @@ export async function applicationsByStudent(studentId: string): Promise<Applicat
     .sort((x, y) => y.createdAt.localeCompare(x.createdAt));
 }
 
-export async function updateApplicationStage(
+/**
+ * Stage update with ownership in the SQL (CWE-639): the update only
+ * matches applications whose job belongs to the recruiter. Returns
+ * the updated application or undefined when not found/not owned.
+ */
+export async function updateApplicationStageForRecruiter(
   id: string,
-  stage: ApplicationStage
+  stage: ApplicationStage,
+  recruiterId: string
 ): Promise<Application | undefined> {
   if (hasDb()) {
     const rows = await query<ApplicationRow>(
-      `update applications set stage = $2, updated_at = now() where id = $1 returning *`,
-      [id, stage]
+      `update applications
+         set stage = $2, updated_at = now()
+       where id = $1
+         and job_id in (select id from posted_jobs where recruiter_id = $3)
+       returning *`,
+      [id, stage, recruiterId]
     );
     return rows[0] ? mapApplication(rows[0]) : undefined;
   }
   const apps = await readJson<Application[]>(APPLICATIONS_FILE, []);
-  const app = apps.find((a) => a.id === id);
+  const ownedJobIds = new Set(
+    (await readPostedJobs()).filter((j) => j.recruiterId === recruiterId).map((j) => j.id)
+  );
+  const app = apps.find((x) => x.id === id && ownedJobIds.has(x.jobId));
   if (!app) return undefined;
   app.stage = stage;
   app.updatedAt = new Date().toISOString();
-  await writeJson(APPLICATIONS_FILE, apps);
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(APPLICATIONS_FILE, JSON.stringify(apps, null, 2));
   return app;
 }
 
-export async function findApplication(jobId: string, studentId: string): Promise<Application | undefined> {
+/** Null out any legacy college values (run once via db:disable-demo/db:migrate-college). */
+export async function scrubLegacyCollege(): Promise<void> {
+  if (hasDb()) {
+    await query(`update applications set college = null where college is not null`);
+  }
+  const apps = await readJson<Application[]>(APPLICATIONS_FILE, []);
+  let changed = false;
+  for (const app of apps) {
+    if (app.college) {
+      app.college = null;
+      changed = true;
+    }
+  }
+  if (changed) {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(APPLICATIONS_FILE, JSON.stringify(apps, null, 2));
+  }
+}
+
+/** Duplicate-application guard for the POST /api/applications route. */
+export async function findApplication(
+  jobId: string,
+  studentId: string
+): Promise<Application | undefined> {
   if (hasDb()) {
     const rows = await query<ApplicationRow>(
       `select * from applications where job_id = $1 and student_id = $2 limit 1`,
@@ -266,6 +349,8 @@ export type PostedJob = {
   skills: { skillId: string; minScore: number }[];
   description: string;
   perks: string[];
+  /** drafts are excluded from the public feed (CWE-863) */
+  status: "draft" | "published";
   createdAt: string;
 };
 
@@ -280,6 +365,7 @@ type PostedJobRow = {
   skills: { skillId: string; minScore: number }[];
   description: string;
   perks: string[];
+  status: string | null;
   created_at: Date | string;
 };
 
@@ -295,20 +381,24 @@ function mapPostedJob(r: PostedJobRow): PostedJob {
     skills: r.skills ?? [],
     description: r.description,
     perks: r.perks ?? [],
+    status: r.status === "draft" ? "draft" : "published",
     createdAt: iso(r.created_at),
   };
 }
 
 const POSTED_JOBS_FILE = path.join(DATA_DIR, "posted-jobs.json");
 
+/** Only published jobs reach the public feed. */
 export async function readPostedJobs(): Promise<PostedJob[]> {
   if (hasDb()) {
     const rows = await query<PostedJobRow>(
-      `select * from posted_jobs order by created_at desc`
+      `select * from posted_jobs where status = 'published' order by created_at desc`
     );
     return rows.map(mapPostedJob);
   }
-  return readJson<PostedJob[]>(POSTED_JOBS_FILE, []);
+  return (await readJson<PostedJob[]>(POSTED_JOBS_FILE, []))
+    .filter((j) => (j.status ?? "published") === "published")
+    .sort((x, y) => y.createdAt.localeCompare(x.createdAt));
 }
 
 export async function addPostedJob(j: Omit<PostedJob, "id" | "createdAt">): Promise<PostedJob> {
@@ -319,17 +409,18 @@ export async function addPostedJob(j: Omit<PostedJob, "id" | "createdAt">): Prom
   };
   if (hasDb()) {
     const rows = await query<PostedJobRow>(
-      `insert into posted_jobs (id, recruiter_id, role, company, location, salary, type, skills, description, perks, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning *`,
+      `insert into posted_jobs (id, recruiter_id, role, company, location, salary, type, skills, description, perks, status, created_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *`,
       [job.id, job.recruiterId, job.role, job.company, job.location, job.salary,
        job.type, JSON.stringify(job.skills), job.description, JSON.stringify(job.perks),
-       job.createdAt]
+       job.status, job.createdAt]
     );
     return mapPostedJob(rows[0]);
   }
   const jobs = await readJson<PostedJob[]>(POSTED_JOBS_FILE, []);
   jobs.push(job);
-  await writeJson(POSTED_JOBS_FILE, jobs);
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(POSTED_JOBS_FILE, JSON.stringify(jobs, null, 2));
   return job;
 }
 
@@ -357,6 +448,7 @@ export async function deletePostedJob(id: string, recruiterId: string): Promise<
   const jobs = await readJson<PostedJob[]>(POSTED_JOBS_FILE, []);
   const next = jobs.filter((j) => !(j.id === id && j.recruiterId === recruiterId));
   if (next.length === jobs.length) return false;
-  await writeJson(POSTED_JOBS_FILE, next);
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(POSTED_JOBS_FILE, JSON.stringify(next, null, 2));
   return true;
 }

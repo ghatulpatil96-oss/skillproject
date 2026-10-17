@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { SKILLS, skillById } from "@/lib/data";
 import { CANDIDATES } from "@/lib/roles";
 
@@ -30,6 +31,12 @@ export default function CandidateSearchPage() {
     <div className="min-h-screen">
       <TopBar title="Find candidates" />
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <Breadcrumbs
+          items={[
+            { label: "Recruiter dashboard", href: "/recruiter" },
+            { label: "Find candidates" },
+          ]}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-extrabold">Find Candidates</h1>
           <span className="chip bg-tile text-ink-3">demo data</span>

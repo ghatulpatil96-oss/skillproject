@@ -165,7 +165,7 @@ export const templates = {
   welcome(name: string, role: string) {
     return {
       kind: "welcome",
-      subject: "Welcome to SkillBridge 🎉",
+      subject: "Welcome to SkillBridge",
       title: `Welcome aboard, ${esc(name)}!`,
       bodyHtml:
         role === "recruiter"
@@ -173,9 +173,9 @@ export const templates = {
              <p>While you wait, you can explore the candidate search and draft your first job post.</p>`
           : `<p>You just joined students from tier 2/3 colleges learning job-ready skills.</p>
              <p><strong>Your next steps:</strong></p>
-             <p>1. Pick a roadmap (Frontend, Backend, Data, QA)<br/>
-             2. Pass a skill test to earn a verified scorecard<br/>
-             3. Get discovered by recruiters hiring on skills</p>`,
+             <p>&#8226; Pick a roadmap (Frontend, Backend, Data, QA)<br/>
+             &#8226; Pass a skill test to earn a verified scorecard<br/>
+             &#8226; Appear in recruiter searches scored on your verified tests</p>`,
       cta: { label: role === "recruiter" ? "Open recruiter dashboard" : "Start a roadmap", url: "/roadmaps" },
     };
   },
@@ -186,7 +186,7 @@ export const templates = {
     return {
       kind: "test-result",
       subject: passed
-        ? `✅ Verified: ${esc(skill)} ${safeScore}/100 — scorecard issued`
+        ? `Verified: ${esc(skill)} ${safeScore}/100 — scorecard issued`
         : `Your ${esc(skill)} result: ${safeScore}/100`,
       title: passed ? "New verified scorecard!" : "Test complete — keep going",
       bodyHtml: passed
@@ -201,7 +201,7 @@ export const templates = {
   applicationReceived(jobTitle: string, company: string, studentName: string) {
     return {
       kind: "application",
-      subject: `📨 New application: ${esc(studentName)} → ${esc(jobTitle)}`,
+      subject: `New application: ${esc(studentName)} → ${esc(jobTitle)}`,
       title: "New applicant with verified skills",
       bodyHtml: `<p><strong>${esc(studentName)}</strong> just applied to <strong>${esc(jobTitle)}</strong> at ${esc(company)}.</p>
                  <p>Their verified skill scores were auto-ranked against your job requirements — check the pipeline to shortlist.</p>`,
@@ -222,7 +222,7 @@ export const templates = {
   recruiterApproved(name: string, company: string) {
     return {
       kind: "recruiter-approved",
-      subject: "✅ Recruiter account approved — start posting",
+      subject: "Recruiter account approved — start posting",
       title: "You're verified!",
       bodyHtml: `<p>Hi ${esc(name)},</p><p><strong>${esc(company)}</strong> is now a verified recruiter on SkillBridge. You can post jobs and shortlist verified candidates immediately.</p>`,
       cta: { label: "Post your first job", url: "/recruiter/post" },
@@ -241,7 +241,7 @@ export const templates = {
   adminNewRecruiter(company: string, email: string) {
     return {
       kind: "admin-review",
-      subject: `🚩 Recruiter awaiting verification: ${esc(company)}`,
+      subject: `Recruiter awaiting verification: ${esc(company)}`,
       title: "Verification queue: new recruiter",
       bodyHtml: `<p><strong>${esc(company)}</strong> (${esc(email)}) signed up as a recruiter and needs review before posting jobs.</p>`,
       cta: { label: "Open verification queue", url: "/admin/recruiters" },

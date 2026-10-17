@@ -56,10 +56,24 @@ function JobsInner() {
         setJobs(d.jobs.filter((j) => !seen.has(j.id) && seen.add(j.id)));
       })
       .catch(() => setJobs(IS_DEV ? JOBS : []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [selectedId, setSelectedId] = useState(params.get("selected") ?? "");
   const selected = jobs.find((j) => j.id === selectedId) ?? jobs[0];
+
+  const matchFor = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const job of jobs) {
+      let sum = 0;
+      for (const req of job.skills) {
+        const score = myScores[req.skillId]?.score ?? 0;
+        sum += Math.min(100, Math.round((score / req.minScore) * 100));
+      }
+      map.set(job.id, Math.round(sum / job.skills.length));
+    }
+    return map;
+  }, [myScores, jobs]);
 
   if (!selected) {
     return (
@@ -74,20 +88,6 @@ function JobsInner() {
       </div>
     );
   }
-
-  /** match % = verified-skill coverage of the job's requirements */
-  const matchFor = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const job of jobs) {
-      let sum = 0;
-      for (const req of job.skills) {
-        const score = myScores[req.skillId]?.score ?? 0;
-        sum += Math.min(100, Math.round((score / req.minScore) * 100));
-      }
-      map.set(job.id, Math.round(sum / job.skills.length));
-    }
-    return map;
-  }, [myScores, jobs]);
 
   const filtered = jobs.filter((j) => {
     const q = query.trim().toLowerCase();

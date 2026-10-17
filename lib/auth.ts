@@ -4,6 +4,13 @@
 // the payload), and a user store that runs on Neon Postgres when
 // DATABASE_URL is set (falls back to .data/users.json otherwise).
 // Zero-dependency sessions so the edge middleware stays DB-free.
+//
+// Demo-account policy (CWE-798):
+//  • Demo users (id prefix `u_demo_`) exist only when DEMO_MODE is on.
+//  • When demo mode is OFF they are rejected at login AND at session
+//    lookup, so imported demo identities can never authenticate.
+//  • session_version lets scripts/disable-demo-users.mjs invalidate
+//    already-issued sessions for disabled demo accounts.
 // ─────────────────────────────────────────────────────────────
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -24,6 +31,11 @@ export const SESSION_COOKIE = "sb_session";
 
 export type { Role };
 export type { Role as RoleType };
+
+/** Demo identities are prefixed so they can be recognised everywhere. */
+export function isDemoUserId(id: string): boolean {
+  return id.startsWith("u_demo_");
+}
 
 // ── session secret (fail fast in production) ─────────────────
 const DEV_SECRET_FALLBACK = "skillbridge-dev-secret-change-in-production";
@@ -62,9 +74,11 @@ export type User = {
   // recruiter fields
   company?: string;
   verifiedRecruiter?: boolean;
+  // bumped by disable scripts; > version in the token payload → session dead
+  sessionVersion?: number;
 };
 
-export type SessionPayload = { userId: string; role: Role; exp: number }; // exp = epoch ms
+export type SessionPayload = { userId: string; role: Role; exp: number; ver?: number }; // exp = epoch ms
 
 // ── passwords (async scrypt — never blocks the event loop) ───
 export async function hashPassword(password: string): Promise<string> {
@@ -101,11 +115,17 @@ export function signatureMatches(data: string, signature: string): boolean {
   return expected.length === got.length && timingSafeEqual(expected, got);
 }
 
-export function createSessionToken(userId: string, role: Role, days = 30): string {
+export function createSessionToken(
+  userId: string,
+  role: Role,
+  days = 30,
+  sessionVersion = 0
+): string {
   const payload: SessionPayload = {
     userId,
     role,
     exp: Date.now() + days * 24 * 60 * 60 * 1000,
+    ver: sessionVersion,
   };
   const body = b64url(JSON.stringify(payload));
   return `${body}.${sign(body)}`;
@@ -148,6 +168,7 @@ type UserRow = {
   grad_year: number | null;
   company: string | null;
   verified_recruiter: boolean | null;
+  session_version: number | null;
   created_at: Date | string;
 };
 
@@ -163,8 +184,26 @@ function mapUser(r: UserRow): User {
     gradYear: r.grad_year ?? undefined,
     company: r.company ?? undefined,
     verifiedRecruiter: r.verified_recruiter ?? undefined,
+    sessionVersion: r.session_version ?? 0,
   };
 }
+
+type DemoSeed = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  college?: string;
+  gradYear?: number;
+  company?: string;
+  verified?: boolean;
+};
+
+const DEMO_SEED: DemoSeed[] = [
+  { id: "u_demo_student", name: "Ananya Sharma", email: "ananya@student.in", role: "student", college: "COEP Pune", gradYear: 2027 },
+  { id: "u_demo_recruiter", name: "Riya Mehta", email: "riya@pixelforge.dev", role: "recruiter", company: "PixelForge Labs", verified: true },
+  { id: "u_demo_admin", name: "Saurabh K.", email: "admin@skillbridge.local", role: "admin" },
+];
 
 let demoSeeded = false;
 async function seedDemoUsersOnce() {
@@ -172,12 +211,7 @@ async function seedDemoUsersOnce() {
   demoSeeded = true;
   const hash = await hashPassword(DEMO_PASSWORD);
   const now = new Date().toISOString();
-  const demos = [
-    { id: "u_demo_student", name: "Ananya Sharma", email: "ananya@student.in", role: "student" as Role, college: "COEP Pune", gradYear: 2027 },
-    { id: "u_demo_recruiter", name: "Riya Mehta", email: "riya@pixelforge.dev", role: "recruiter" as Role, company: "PixelForge Labs", verified: true },
-    { id: "u_demo_admin", name: "Saurabh K.", email: "admin@skillbridge.local", role: "admin" as Role },
-  ];
-  for (const d of demos) {
+  for (const d of DEMO_SEED) {
     await query(
       `insert into users (id, email, name, password_hash, role, college, grad_year, company, verified_recruiter, created_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict (id) do nothing`,
@@ -196,11 +230,18 @@ async function buildDemoUsers(): Promise<User[]> {
     createdAt: now,
     ...over,
   });
-  return [
-    mk({ id: "u_demo_student", name: "Ananya Sharma", email: "ananya@student.in", role: "student", college: "COEP Pune", gradYear: 2027 }),
-    mk({ id: "u_demo_recruiter", name: "Riya Mehta", email: "riya@pixelforge.dev", role: "recruiter", company: "PixelForge Labs", verifiedRecruiter: true }),
-    mk({ id: "u_demo_admin", name: "Saurabh K.", email: "admin@skillbridge.local", role: "admin" }),
-  ];
+  return DEMO_SEED.map((d) =>
+    mk({
+      id: d.id,
+      name: d.name,
+      email: d.email,
+      role: d.role,
+      college: d.college,
+      gradYear: d.gradYear,
+      company: d.company,
+      verifiedRecruiter: d.role === "recruiter" ? (d.verified ?? false) : undefined,
+    })
+  );
 }
 
 async function readUsersJson(): Promise<User[]> {
@@ -212,7 +253,7 @@ async function readUsersJson(): Promise<User[]> {
   }
   if (DEMO_MODE) {
     const has = (id: string) => users.some((u) => u.id === id);
-    if (!has("u_demo_student") || !has("u_demo_recruiter") || !has("u_demo_admin")) {
+    if (DEMO_SEED.some((d) => !has(d.id))) {
       const demos = await buildDemoUsers();
       users = [...users, ...demos.filter((d) => !has(d.id))];
       await fs.mkdir(DATA_DIR, { recursive: true });
@@ -222,27 +263,50 @@ async function readUsersJson(): Promise<User[]> {
   return users;
 }
 
+/**
+ * Production auth guard: a demo identity may only authenticate or
+ * resolve a session while DEMO_MODE is on. Every login path and
+ * session lookup must call this.
+ */
+function demoUserAllowed(user: User): boolean {
+  if (!isDemoUserId(user.id)) return true;
+  return DEMO_MODE;
+}
+
 // ── exported store API (branches on backend) ─────────────────
 export async function getUserFromToken(token: string | undefined): Promise<User | null> {
   const payload = verifySessionToken(token);
   if (!payload) return null;
+
+  let user: User | null | undefined;
   if (hasDb()) {
     await seedDemoUsersOnce();
     const rows = await query<UserRow>(`select * from users where id = $1`, [payload.userId]);
-    return rows[0] ? mapUser(rows[0]) : null;
+    user = rows[0] ? mapUser(rows[0]) : null;
+  } else {
+    user = (await readUsersJson()).find((u) => u.id === payload.userId) ?? null;
   }
-  const users = await readUsersJson();
-  return users.find((u) => u.id === payload.userId) ?? null;
+
+  if (!user || !demoUserAllowed(user)) return null;
+
+  // session_version — an admin script can bump it to kill old tokens
+  const storedVersion = user.sessionVersion ?? 0;
+  if ((payload.ver ?? 0) < storedVersion) return null;
+
+  return user;
 }
 
 export async function findUserByEmail(email: string): Promise<User | undefined> {
+  let user: User | undefined;
   if (hasDb()) {
     await seedDemoUsersOnce();
     const rows = await query<UserRow>(`select * from users where email = lower($1)`, [email]);
-    return rows[0] ? mapUser(rows[0]) : undefined;
+    user = rows[0] ? mapUser(rows[0]) : undefined;
+  } else {
+    user = (await readUsersJson()).find((u) => u.email.toLowerCase() === email.toLowerCase());
   }
-  const users = await readUsersJson();
-  return users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (user && !demoUserAllowed(user)) return undefined;
+  return user;
 }
 
 export async function createUser(input: {
@@ -250,7 +314,6 @@ export async function createUser(input: {
   email: string;
   password: string;
   role: Role;
-  college?: string;
   gradYear?: number;
   company?: string;
 }): Promise<User> {
@@ -258,34 +321,36 @@ export async function createUser(input: {
   const passwordHash = await hashPassword(input.password);
   const createdAt = new Date().toISOString();
 
-  if (hasDb()) {
-    const rows = await query<UserRow>(
-      `insert into users (id, email, name, password_hash, role, college, grad_year, company, verified_recruiter, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
-      [id, input.email.toLowerCase(), input.name, passwordHash, input.role,
-       input.college ?? null, input.gradYear ?? null, input.company ?? null,
-       input.role === "recruiter" ? false : false, createdAt]
-    );
-    return mapUser(rows[0]);
-  }
-
-  const users = await readUsersJson();
-  const user: User = {
+  // college is NOT collected or stored any more (recruiter-bias decision).
+  const created: User = {
     id,
     name: input.name,
     email: input.email.toLowerCase(),
     passwordHash,
     role: input.role,
     createdAt,
-    college: input.college,
     gradYear: input.gradYear,
     company: input.company,
     verifiedRecruiter: input.role === "recruiter" ? false : undefined,
+    sessionVersion: 0,
   };
-  users.push(user);
+
+  if (hasDb()) {
+    const rows = await query<UserRow>(
+      `insert into users (id, email, name, password_hash, role, grad_year, company, verified_recruiter, created_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
+      [id, created.email, input.name, passwordHash, input.role,
+       input.gradYear ?? null, input.company ?? null,
+       input.role === "recruiter" ? false : false, createdAt]
+    );
+    return mapUser(rows[0]);
+  }
+
+  const users = await readUsersJson();
+  users.push(created);
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
-  return user;
+  return created;
 }
 
 export async function setRecruiterVerified(userId: string, verified: boolean): Promise<User | undefined> {

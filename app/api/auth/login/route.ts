@@ -7,17 +7,27 @@ import {
   SESSION_MAX_AGE,
   verifyPassword,
 } from "@/lib/auth";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { authRateLimit } from "@/lib/rate-limit";
+import { assertSameOrigin, readJson } from "@/lib/security";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = (await req.json()) as { email?: string; password?: string };
+    if (!(await assertSameOrigin(req))) {
+      return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+    }
+    const body = await readJson<{ email?: string; password?: string }>(req);
+    if (!body.ok) {
+      return NextResponse.json({ error: body.error }, { status: body.status });
+    }
+    const { email = "", password = "" } = body.data;
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
-    // brute-force guard: 5 attempts / 15 min per IP+email
-    const rl = rateLimit(`${clientIp(req)}|${email.toLowerCase()}`);
+    // brute-force guard, BEFORE any validation work:
+    //  • per IP+email bucket (slows scanner churn)
+    //  • per-account email bucket (header rotation cannot reset it)
+    const rl = authRateLimit(req, email.toLowerCase());
     if (!rl.ok) {
       return NextResponse.json(
         { error: `Too many attempts. Try again in ${Math.ceil(rl.retryAfterSec / 60)} minute(s).` },
@@ -25,14 +35,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await findUserByEmail(email);
-    // same message for both cases — no user enumeration
-    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    const found = await findUserByEmail(email);
+    // same message for all failures — no user or demo-mode enumeration
+    if (!found || !(await verifyPassword(password, found.passwordHash))) {
       return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
     }
 
-    const token = createSessionToken(user.id, user.role);
-    const res = NextResponse.json({ user: publicUser(user) });
+    const token = createSessionToken(found.id, found.role, 30, found.sessionVersion ?? 0);
+    const res = NextResponse.json({ user: publicUser(found) });
     res.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: "lax",

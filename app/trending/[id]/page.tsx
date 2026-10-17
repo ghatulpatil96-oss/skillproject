@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import {
   TRENDING_SKILLS,
   SOURCE_LABEL,
@@ -49,12 +50,15 @@ export default async function TrendingDetailPage({
     <div className="min-h-screen">
       <TopBar title={skill.title} />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-        <Link href="/trending" className="text-sm text-ink-2 hover:text-accent">
-          ← All trending skills
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Trending skills", href: "/trending" },
+            { label: skill.title },
+          ]}
+        />
 
         {/* header */}
-        <header className="mt-4">
+        <header>
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip bg-tile text-xs text-ink-2">{skill.category}</span>
             <time
@@ -106,8 +110,12 @@ export default async function TrendingDetailPage({
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-ink-3">
-                          <span title={`Verified by ${r.verified_by}`}>
-                            Verified by {r.verified_by}
+                          <span title={`Link verified by the SkillBridge content team`}>
+                            {/* TODO(real): verified_by in data/trending-skills.json is
+                                currently the generic string "content-team" for all 64
+                                resources. Replace with a real reviewer name per entry, and
+                                this page will then print that name. */}
+                            Reviewed by the SkillBridge content team
                           </span>{" "}
                           ·{" "}
                           <time dateTime={r.last_checked_date} title="Link last checked working">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { roadmapById } from "@/lib/data";
 import { lessonByTopicId, type Lesson } from "@/lib/lessons";
 import { loadLessonMdx } from "@/lib/lesson-mdx";
@@ -48,17 +49,17 @@ export default async function LessonPage({
     <div className="min-h-screen">
       <TopBar title={roadmap.title} />
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        {/* breadcrumb */}
-        <nav className="flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
-          <Link href="/roadmaps" className="hover:text-accent">Roadmaps</Link>
-          <span>/</span>
-          <Link href={`/roadmaps/${roadmap.id}`} className="hover:text-accent">{roadmap.title}</Link>
-          <span>/</span>
-          <span className="font-semibold text-ink-2">Stage {stageIndex + 1}: {stage.name}</span>
-        </nav>
+        <Breadcrumbs
+          items={[
+            { label: "Roadmaps", href: "/roadmaps" },
+            { label: roadmap.title, href: `/roadmaps/${roadmap.id}` },
+            { label: `Stage ${stageIndex + 1}: ${stage.name}` },
+            { label: mdx?.meta.title ?? topicTitle },
+          ]}
+        />
 
         {/* header */}
-        <header className="mt-5">
+        <header>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="chip bg-tile text-ink-2">Topic {flatIndex + 1} of {flat.length}</span>
             <span className="chip bg-tile text-ink-2">~{mdx?.meta.minutes ?? topicHours} min read</span>

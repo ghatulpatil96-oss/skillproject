@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 type QueueRow = {
   id: string;
@@ -58,6 +59,12 @@ export default function AdminRecruitersPage() {
     <div className="min-h-screen">
       <TopBar title="Recruiter verification" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+        <Breadcrumbs
+          items={[
+            { label: "Admin console", href: "/admin" },
+            { label: "Recruiter verification" },
+          ]}
+        />
         <h1 className="text-2xl font-extrabold">Recruiter Verification Queue</h1>
         <p className="mt-1 text-sm text-ink-2">
           New recruiter sign-ups are reviewed before they can post jobs or message

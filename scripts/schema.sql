@@ -14,6 +14,7 @@ create table if not exists users (
   grad_year           int,
   company             text,
   verified_recruiter  boolean not null default false,
+  session_version     int not null default 0,
   created_at          timestamptz not null default now()
 );
 
@@ -59,6 +60,7 @@ create table if not exists posted_jobs (
   skills        jsonb not null default '[]',
   description   text not null default '',
   perks         jsonb not null default '[]',
+  status        text not null default 'published' check (status in ('draft', 'published')),
   created_at    timestamptz not null default now()
 );
 create index if not exists posted_jobs_recruiter_idx on posted_jobs (recruiter_id, created_at desc);

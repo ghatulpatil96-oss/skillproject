@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { SKILLS } from "@/lib/data";
 
 export default function PostJobPage() {
@@ -49,6 +50,12 @@ export default function PostJobPage() {
     <div className="min-h-screen">
       <TopBar title="Post a job" />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <Breadcrumbs
+          items={[
+            { label: "Recruiter dashboard", href: "/recruiter" },
+            { label: "Post a job" },
+          ]}
+        />
         <h1 className="text-2xl font-extrabold">Post a Job</h1>
         <p className="mt-1 text-sm text-ink-2">
           Define required verified skills + minimum scores. Your job goes live in the

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { ROADMAPS, skillById, roadmapById } from "@/lib/data";
 import { useProgress, roadmapProgress } from "@/lib/progress";
 
@@ -40,10 +41,15 @@ export default function RoadmapDetailPage({
     <div className="min-h-screen">
       <TopBar title={roadmap.title} />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-        <Link href="/roadmaps" className="text-sm text-ink-2 hover:text-accent">← All roadmaps</Link>
+        <Breadcrumbs
+          items={[
+            { label: "Roadmaps", href: "/roadmaps" },
+            { label: roadmap.title },
+          ]}
+        />
 
         {/* header */}
-        <div className="mt-4 flex flex-wrap items-start gap-5">
+        <div className="flex flex-wrap items-start gap-5">
           <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-tile font-display text-2xl font-bold text-accent">
             {roadmap.title.slice(0, 1)}
           </span>

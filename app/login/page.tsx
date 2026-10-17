@@ -3,6 +3,8 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeNextForRole } from "@/lib/safe-next";
+import type { Role } from "@/lib/types";
 
 const DEMOS = [
   { label: "Student demo", email: "ananya@student.in", initial: "A" },
@@ -13,7 +15,13 @@ const DEMOS = [
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextUrl = params.get("next") ?? "/";
+  const rawNext = params.get("next");
+  const signupParams = new URLSearchParams();
+  if (rawNext) signupParams.set("next", rawNext);
+  if (rawNext === "/recruiter" || rawNext?.startsWith("/recruiter/")) {
+    signupParams.set("role", "recruiter");
+  }
+  const signupHref = signupParams.size ? `/signup?${signupParams.toString()}` : "/signup";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,30 +32,41 @@ function LoginInner() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = (await res.json()) as { error?: string; user?: { role: string } };
-    setBusy(false);
-    if (!res.ok || !data.user) {
-      setError(data.error ?? "Login failed");
-      return;
-    }
-    // update header instantly (SessionProvider listens for this)
-    window.dispatchEvent(new CustomEvent("sb-session", { detail: data.user }));
-    // route each role to its home
-    const home =
-      nextUrl !== "/"
-        ? nextUrl
-        : data.user.role === "recruiter"
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        user?: { role: Role };
+      };
+      if (!res.ok || !data.user) {
+        setError(data.error ?? "Login failed. Please try again.");
+        return;
+      }
+      window.dispatchEvent(new CustomEvent("sb-session", { detail: data.user }));
+
+      const home =
+        data.user.role === "recruiter"
           ? "/recruiter"
           : data.user.role === "admin"
             ? "/admin"
             : "/jobs";
-    router.push(home);
-    router.refresh();
+      const target = safeNextForRole(
+        rawNext,
+        data.user.role,
+        window.location.origin,
+        home
+      );
+      router.push(target);
+      router.refresh();
+    } catch {
+      setError("Could not log in. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -60,7 +79,7 @@ function LoginInner() {
 
         <div className="card p-8">
           <h1 className="text-2xl font-extrabold">Welcome back</h1>
-          <p className="mt-1 text-sm text-ink-2">Log in to continue your skill journey.</p>
+          <p className="mt-1 text-sm text-ink-2">Log in to continue.</p>
 
           <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
             <div>
@@ -79,26 +98,28 @@ function LoginInner() {
 
           <p className="mt-4 text-center text-sm text-ink-2">
             New here?{" "}
-            <Link href="/signup" className="font-semibold text-accent hover:underline">Create an account</Link>
+            <Link href={signupHref} className="font-semibold text-accent hover:underline">Create an account</Link>
           </p>
         </div>
 
-        {/* demo accounts */}
-        <div className="card mt-4 p-4">
-          <p className="text-center text-xs font-semibold uppercase tracking-wide text-ink-3">Demo accounts — password: skillbridge123</p>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {DEMOS.map((d) => (
-              <button
-                key={d.email}
-                onClick={() => { setEmail(d.email); setPassword("skillbridge123"); }}
-                className="flex flex-col items-center gap-1 rounded-lg border border-line py-3 text-xs font-semibold transition hover:border-accent hover:text-accent"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent font-display text-sm font-bold text-canvas">{d.initial}</span>
-                {d.label}
-              </button>
-            ))}
+        {/* demo accounts — only rendered when explicitly in demo mode */}
+        {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+          <div className="card mt-4 p-4">
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-ink-3">Demo accounts — password: skillbridge123</p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {DEMOS.map((d) => (
+                <button
+                  key={d.email}
+                  onClick={() => { setEmail(d.email); setPassword("skillbridge123"); }}
+                  className="flex flex-col items-center gap-1 rounded-lg border border-line py-3 text-xs font-semibold transition hover:border-accent hover:text-accent"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent font-display text-sm font-bold text-canvas">{d.initial}</span>
+                  {d.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );

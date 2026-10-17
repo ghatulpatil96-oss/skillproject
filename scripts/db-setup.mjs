@@ -46,19 +46,40 @@ async function main() {
   let counts = {};
 
   // ── users ──
+  // Demo identities are excluded by default: importing a demo admin
+  // into production would let its published credentials authenticate
+  // there (CWE-798). Pass --include-demo to import deliberately.
+  const includeDemo = process.argv.includes("--include-demo");
+  const isDemoId = (id) => typeof id === "string" && id.startsWith("u_demo_");
+  let skippedDemo = 0;
   for (const u of readJson("users")) {
+    if (!includeDemo && (isDemoId(u.id) || /@skillbridge\.local$/i.test(u.email ?? ""))) {
+      skippedDemo++;
+      continue;
+    }
     await pool.query(
-      `insert into users (id, email, name, password_hash, role, college, grad_year, company, verified_recruiter, created_at)
+      `insert into users (id, email, name, password_hash, role, grad_year, company, verified_recruiter, session_version, created_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        on conflict (id) do nothing`,
-      [u.id, u.email.toLowerCase(), u.name, u.passwordHash, u.role, u.college ?? null,
-       u.gradYear ?? null, u.company ?? null, u.verifiedRecruiter ?? false, u.createdAt ?? null]
+      [u.id, u.email.toLowerCase(), u.name, u.passwordHash, u.role, u.gradYear ?? null,
+       u.company ?? null, u.verifiedRecruiter ?? false, 0, u.createdAt ?? null]
     );
   }
+  if (skippedDemo > 0) {
+    console.log(`  skipped ${skippedDemo} demo user(s) (use --include-demo to override)`);
+  }
   counts.users = (await pool.query("select count(*)::int as n from users")).rows[0].n;
+  const userIds = new Set(
+    (await pool.query("select id from users")).rows.map((row) => row.id)
+  );
 
   // ── attempts ──
+  let skippedAttempts = 0;
   for (const a of readJson("attempts")) {
+    if (!userIds.has(a.userId)) {
+      skippedAttempts++;
+      continue;
+    }
     await pool.query(
       `insert into attempts (id, user_id, skill_id, score, percentile, passed, answers, integrity_flags, created_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict (id) do nothing`,
@@ -66,22 +87,39 @@ async function main() {
        JSON.stringify(a.answers ?? {}), a.integrityFlags ?? 0, a.createdAt ?? null]
     );
   }
+  if (skippedAttempts > 0) {
+    console.log(`  skipped ${skippedAttempts} attempt(s) whose user is not in the database`);
+  }
   counts.attempts = (await pool.query("select count(*)::int as n from attempts")).rows[0].n;
 
   // ── applications ──
+  // applications are migrated with college nulled — recruiters never read it
+  let skippedApplications = 0;
   for (const a of readJson("applications")) {
+    if (!userIds.has(a.studentId)) {
+      skippedApplications++;
+      continue;
+    }
     await pool.query(
       `insert into applications (id, job_id, student_id, student_name, student_email, college, scores, match_percent, stage, created_at, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) on conflict (id) do nothing`,
-      [a.id, a.jobId, a.studentId, a.studentName, a.studentEmail, a.college ?? null,
+       values ($1,$2,$3,$4,$5,NULL,$6,$7,$8,$9,$10) on conflict (id) do nothing`,
+      [a.id, a.jobId, a.studentId, a.studentName, a.studentEmail,
        JSON.stringify(a.scores ?? {}), a.matchPercent ?? 0, a.stage ?? "applied",
        a.createdAt ?? null, a.updatedAt ?? null]
     );
   }
+  if (skippedApplications > 0) {
+    console.log(`  skipped ${skippedApplications} application(s) whose student is not in the database`);
+  }
   counts.applications = (await pool.query("select count(*)::int as n from applications")).rows[0].n;
 
   // ── posted jobs ──
+  let skippedJobs = 0;
   for (const j of readJson("posted-jobs")) {
+    if (!userIds.has(j.recruiterId)) {
+      skippedJobs++;
+      continue;
+    }
     await pool.query(
       `insert into posted_jobs (id, recruiter_id, role, company, location, salary, type, skills, description, perks, created_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) on conflict (id) do nothing`,
@@ -89,6 +127,9 @@ async function main() {
        j.type ?? "Full-time", JSON.stringify(j.skills ?? []), j.description ?? "",
        JSON.stringify(j.perks ?? []), j.createdAt ?? null]
     );
+  }
+  if (skippedJobs > 0) {
+    console.log(`  skipped ${skippedJobs} posted job(s) whose recruiter is not in the database`);
   }
   counts.posted_jobs = (await pool.query("select count(*)::int as n from posted_jobs")).rows[0].n;
 

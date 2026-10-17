@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { skillById } from "@/lib/data";
 
 type Phase = "intro" | "loading" | "running" | "grading" | "done";
 
 type ApiQuestion = { id: string; type: "mcq" | "code"; text: string; options?: string[] };
-type ReviewItem = { index: number; text: string; ok: boolean; correctIndex: number | null; correctText: string | null; explanation: string };
+type ReviewItem = { index: number; text: string; ok: boolean; correctIndex?: number | null; correctText?: string | null; explanation: string };
 
 export default function TestPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -20,7 +21,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [secondsLeft, setSecondsLeft] = useState(20 * 60);
-  const [result, setResult] = useState<{ score: number; percentile: number; passed: boolean; attemptsLeft: number; review: ReviewItem[] } | null>(null);
+  const [result, setResult] = useState<{ score: number; percentile: number; passed: boolean; attemptsLeft: number; mode?: "verified" | "practice"; review: ReviewItem[] } | null>(null);
   const [tabSwitches, setTabSwitches] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +92,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
         percentile?: number;
         passed?: boolean;
         attemptsLeft?: number;
+        mode?: "verified" | "practice";
         review?: ReviewItem[];
       };
       if (!res.ok || data.score === undefined) {
@@ -103,6 +105,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
         percentile: data.percentile ?? 0,
         passed: data.passed ?? false,
         attemptsLeft: data.attemptsLeft ?? 0,
+        mode: data.mode,
         review: data.review ?? [],
       });
       setPhase("done");
@@ -120,6 +123,14 @@ export default function TestPage({ params }: { params: { id: string } }) {
     <div className="min-h-screen">
       <TopBar title={`${skill.name} test`} />
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        {phase !== "running" && phase !== "grading" && (
+          <Breadcrumbs
+            items={[
+              { label: "Skill tests", href: "/tests" },
+              { label: `${skill.name} test` },
+            ]}
+          />
+        )}
         {/* ── INTRO ── */}
         {phase === "intro" && (
           <div className="card p-8 text-center">
@@ -133,9 +144,9 @@ export default function TestPage({ params }: { params: { id: string } }) {
               Your best verified score appears on your profile for recruiters.
             </p>
             <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm text-ink-2">
-              <li>⏱ Timer starts when you click start — auto-submits at 0.</li>
-              <li>🔒 Tab-switching is counted (integrity flag at 5+).</li>
-              <li>🧑‍💼 Log in first — attempts and scorecards are per-account (max 3 per 30 days).</li>
+              <li>The timer starts when you click start and auto-submits at zero.</li>
+              <li>Tab-switching is counted; 5 or more flags the attempt for review.</li>
+              <li>Log in first — attempts and scorecards are per-account, at most 3 per 30 days.</li>
             </ul>
             {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
             <button onClick={start} className="btn-primary mt-8 w-full sm:w-auto">
@@ -168,7 +179,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
               <span
                 className={`chip font-mono ${secondsLeft < 60 ? "bg-red-50 text-red-600" : "bg-accent/10 text-accent"}`}
               >
-                ⏱ {mm}:{ss}
+                {mm}:{ss}
               </span>
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-tile">
@@ -206,7 +217,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
                 </>
               ) : (
                 <>
-                  <span className="chip bg-charcoal/10 text-charcoal">💻 Coding challenge</span>
+                  <span className="chip bg-charcoal/10 text-charcoal">Coding challenge (practice)</span>
                   <h2 className="mt-3 text-lg font-bold leading-relaxed">{q.text}</h2>
                   <textarea
                     className="input mt-4 min-h-48 font-mono text-xs"
@@ -229,7 +240,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
 
             {tabSwitches >= 3 && (
               <p className="mt-3 text-center text-xs font-semibold text-amber-600">
-                ⚠️ {tabSwitches} tab-switches detected — flagged at 5.
+                {tabSwitches} tab-switches detected — flagged at 5.
               </p>
             )}
 
@@ -247,7 +258,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
                 </button>
               ) : (
                 <button onClick={finish} className="btn-primary">
-                  Submit test ✓
+                  Submit test
                 </button>
               )}
             </div>
@@ -272,9 +283,11 @@ export default function TestPage({ params }: { params: { id: string } }) {
               </div>
             </div>
             <p className="mx-auto mt-4 max-w-md text-sm text-ink-2">
-              {result.passed
-                ? `Your ${skill.name} scorecard is now on your profile — visible to recruiters. It's valid for 6 months.`
-                : `You need 70+ to verify. Review the explanations below, revisit the roadmap, and try again.`}
+              {result.mode === "practice"
+                ? "Practice attempt — the verified score comes from MCQ questions only."
+                : result.passed
+                  ? `Your ${skill.name} scorecard is now on your profile for recruiters.`
+                  : `You need 70+ on the MCQs to verify.`}
               {result.attemptsLeft > 0
                 ? ` ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left this month.`
                 : " That was your last attempt for 30 days."}
@@ -285,7 +298,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
               {result.review.map((r) => (
                 <div key={r.index} className="rounded-lg border border-line p-4">
                   <div className="flex items-start gap-2 text-sm font-semibold">
-                    <span>{r.ok ? "✅" : "❌"}</span>
+                    <span className={r.ok ? "text-verify" : "text-red-600"}>{r.ok ? "Correct" : "Incorrect"}</span>
                     <span>Q{r.index}. {r.text}</span>
                   </div>
                   {r.correctText && (
@@ -293,7 +306,7 @@ export default function TestPage({ params }: { params: { id: string } }) {
                       Correct answer: <strong>{String.fromCharCode(65 + (r.correctIndex ?? 0))}. {r.correctText}</strong>
                     </p>
                   )}
-                  <p className="mt-1 pl-6 text-xs text-ink-2">💡 {r.explanation}</p>
+                  <p className="mt-1 pl-6 text-xs text-ink-2">{r.explanation}</p>
                 </div>
               ))}
             </div>

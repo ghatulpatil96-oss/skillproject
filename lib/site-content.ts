@@ -1,54 +1,35 @@
-// Marketing content in one place so landing, About, and Footer stay in sync.
-// Swap these arrays for a CMS or DB later without touching components.
-
-export const TESTIMONIALS = [
-  {
-    quote:
-      "No one from my college got campus placements. I followed the roadmap, scored 85 on my test, and got two interview calls in a week.",
-    name: "Prateek Verma",
-    detail: "B.Tech 2026 · Tier-3 college, Nagpur",
-    avatar: "P",
-  },
-  {
-    quote:
-      "Recruiters only saw my 6 CGPA. SkillBridge saw my test scores and matched me to a frontend role I actually wanted.",
-    name: "Sneha Das",
-    detail: "BCA 2025 · Kolkata",
-    avatar: "S",
-  },
-  {
-    quote:
-      "We stopped filtering by college tier. Three of our last five hires came from SkillBridge verified scores.",
-    name: "Riya Mehta",
-    detail: "Talent Lead, PixelForge Labs",
-    avatar: "R",
-  },
-] as const;
+// ─────────────────────────────────────────────────────────────
+// Site-shared content: FAQs, footer links, contact address.
+//
+// Principles: no testimonials, no learner counts, no sample
+// companies. Anything shown in production must be real and
+// sourced. TODO(real) markers list content still to be supplied.
+// ─────────────────────────────────────────────────────────────
 
 export const FAQS = [
   {
-    q: "Is SkillBridge really free for students?",
-    a: "Yes — roadmaps, trending-skill guides, and skill tests are free for students, forever. Recruiters pay for candidate search; students never do.",
+    q: "Is SkillBridge free for students?",
+    a: "Yes. Roadmaps, trending-skill guides, and skill tests are free. Students never pay.",
   },
   {
     q: "Do recruiters see my college name?",
-    a: "No — and not your college tier either. Candidate search is skill-first: recruiters see your verified test scores, roadmap progress, and badges. College name and tier are hidden from recruiters entirely, so shortlisting can't be biased by them.",
+    a: "No. Recruiters see your verified test scores, roadmap progress, and badges. College name and tier are hidden from recruiters so those details cannot influence shortlisting.",
   },
   {
     q: "How are test scores verified?",
-    a: "Every test is timed with anti-integrity checks. Score 70+ and your verified scorecard is attached to your profile and visible to recruiters.",
+    a: "Tests are timed and graded on the server. The answer key is never sent to the browser, and each attempt is bound to a signed ticket that records when the session started. A score of 70 or above attaches a verified scorecard to your profile.",
   },
   {
-    q: "What is the 'Trending Skills' section?",
-    a: "It's a curated list of the 10 most in-demand technical skills right now, each broken into milestones with links to official docs and accredited courses — hand-verified, no content farms.",
+    q: "What is the Trending Skills section?",
+    a: "A curated list of in-demand technical skills. Each track is broken into milestones with links: official documentation, established education platforms, accredited courses, or standards bodies.",
   },
   {
     q: "How do I get hired?",
-    a: "Pick a roadmap, take the matching skill test, and apply. Recruiters also search by verified scores — a high score can get you discovered without applying anywhere.",
+    a: "Pick a roadmap, take the matching skill test, and apply to jobs. Recruiters search by verified scores and can discover you without a cold application.",
   },
   {
     q: "Can recruiters use SkillBridge?",
-    a: "Yes. Create a recruiter account, get verified by our team (usually within a day), then post jobs and search candidates by verified skill scores.",
+    a: "Yes. Create a recruiter account, get verified by the team, then post jobs and search candidates by verified skill scores. Unverified recruiters can save job drafts but cannot publish.",
   },
 ] as const;
 
@@ -69,6 +50,7 @@ export const FOOTER_LINKS: {
   {
     heading: "For recruiters",
     links: [
+      { href: "/signup?role=recruiter", label: "Create recruiter account" },
       { href: "/recruiter", label: "Dashboard" },
       { href: "/recruiter/candidates", label: "Find candidates" },
       { href: "/recruiter/post", label: "Post a job" },
@@ -85,10 +67,9 @@ export const FOOTER_LINKS: {
   },
 ];
 
-export const CONTACT_EMAIL = "hello@skillbridge.in";
+export const CONTACT_EMAIL = "hello@skillbridge.in"; // TODO(real): confirm the real contact inbox
 
-/** Marketing copy must not read like a chatbot wrote it — keep it */
-/** concrete, specific, and free of emoji decoration.            */
+/** Shared copy — keep it concrete and specific. */
 export const BRAND = {
   name: "SkillBridge",
   tagline: "Hired for skill, not college name.",

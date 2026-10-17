@@ -22,8 +22,8 @@ export async function POST(req: Request) {
     if (!body.to || !body.template || !(body.template in templates)) {
       return NextResponse.json({ error: "to and a valid template are required" }, { status: 400 });
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tpl = (templates as any)[body.template](...(body.params ?? []));
+    type TemplateFn = (...args: never[]) => { kind: string; subject: string; title: string; bodyHtml: string; cta?: { label: string; url: string } };
+    const tpl = (templates[body.template] as unknown as TemplateFn)(...((body.params ?? []) as never[]));
     const email = await sendEmail({ to: body.to, ...tpl });
     return NextResponse.json({ email }, { status: 201 });
   } catch (err) {

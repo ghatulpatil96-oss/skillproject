@@ -8,47 +8,59 @@ import {
   SESSION_MAX_AGE,
   DEMO_MODE,
 } from "@/lib/auth";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { authRateLimit } from "@/lib/rate-limit";
+import { assertSameOrigin, readJson } from "@/lib/security";
 import { sendEmail, templates } from "@/lib/email";
+
+const MAX_EMAIL_LENGTH = 254; // RFC 5321 limit
+
+/**
+ * Linear-time email check (CWE-1333): no nested/backtracking
+ * quantifiers. Characters outside the local part dots are validated
+ * by character class, so the worst case is one pass over the string.
+ */
+const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as {
+    if (!(await assertSameOrigin(req))) {
+      return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+    }
+    const body = await readJson<{
       name?: string;
       email?: string;
       password?: string;
       role?: string;
-      college?: string;
       gradYear?: number;
       company?: string;
-    };
-
-    const name = body.name?.trim();
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password ?? "";
+    }>(req);
+    if (!body.ok) {
+      return NextResponse.json({ error: body.error }, { status: body.status });
+    }
+    const { name: rawName, email: rawEmail, password = "", company: rawCompany } = body.data;
 
     // ── role whitelist: the public signup form can never mint an admin ──
-    const requested = (body.role ?? "student").toLowerCase();
+    const requested = (body.data.role ?? "student").toLowerCase();
     if (requested === "admin") {
       return NextResponse.json({ error: "Admin accounts cannot be created via signup." }, { status: 403 });
     }
     const role = requested === "recruiter" ? "recruiter" : "student";
 
-    if (!name || name.length < 2) {
-      return NextResponse.json({ error: "Please enter your full name." }, { status: 400 });
-    }
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: "Please enter a valid email." }, { status: 400 });
-    }
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
-    }
-    if (role === "recruiter" && !body.company?.trim()) {
-      return NextResponse.json({ error: "Company name is required for recruiters." }, { status: 400 });
+    const name = rawName?.trim();
+    const email = rawEmail?.trim().toLowerCase();
+    const company = rawCompany?.trim();
+
+    const nameOk = !!name && name.length >= 2;
+    const emailOk = !!email && email.length <= MAX_EMAIL_LENGTH && EMAIL_RE.test(email);
+    const companyOk = role !== "recruiter" || (!!company && company.length > 0);
+    if (!nameOk || !emailOk || !companyOk || password.length < 8) {
+      let error = "Please check your details: name (2+ chars), a valid email, a password of 8+ characters";
+      if (role === "recruiter") error += ", and a company name";
+      return NextResponse.json({ error }, { status: 400 });
     }
 
-    // brute-force guard: 5 signups / 15 min per IP+email
-    const rl = rateLimit(`signup|${clientIp(req)}|${email}`);
+    // rate limit FIRST — before any expensive work beyond field checks
+    const rl = authRateLimit(req, email!);
     if (!rl.ok) {
       return NextResponse.json(
         { error: `Too many attempts. Try again in ${Math.ceil(rl.retryAfterSec / 60)} minute(s).` },
@@ -56,21 +68,21 @@ export async function POST(req: Request) {
       );
     }
 
-    if (await findUserByEmail(email)) {
+    if (await findUserByEmail(email!)) {
       return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
     }
 
+    // NOTE: college is deliberately NOT collected (recruiters never see it).
     const user = await createUser({
-      name,
-      email,
+      name: name!,
+      email: email!,
       password,
       role,
-      college: body.college?.trim() || undefined,
-      gradYear: body.gradYear ? Number(body.gradYear) : undefined,
-      company: body.company?.trim(),
+      gradYear: body.data.gradYear ? Number(body.data.gradYear) : undefined,
+      company,
     });
 
-    const token = createSessionToken(user.id, user.role);
+    const token = createSessionToken(user.id, user.role, 30, user.sessionVersion ?? 0);
     const res = NextResponse.json({ user: publicUser(user) }, { status: 201 });
 
     // welcome email (+ admin ping for recruiter verification). In production

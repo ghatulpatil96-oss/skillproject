@@ -1,13 +1,9 @@
-// ─────────────────────────────────────────────────────────────
-// Role-based seed data: candidates (for recruiters), recruiter
-// & admin seed data, extra jobs, audit trail types.
-// DEMO DATA — render behind a demo label and never as real proof.
-// ─────────────────────────────────────────────────────────────
-
+// Type definitions and clearly-labelled sample data for recruiter /
+// admin interfaces. Nothing here is shown to production users as
+// proof; sample records always appear under a "Sample" label.
 export type Candidate = {
   id: string;
   name: string;
-  avatar: string;
   gradYear: number;
   targetRole: string;
   skills: { skillId: string; score: number; percentile: number }[];
@@ -18,11 +14,11 @@ export type Candidate = {
   lastActiveDays: number;
 };
 
+/** Sample candidate used only where the UI is labelled as a sample. */
 export const CANDIDATES: Candidate[] = [
   {
     id: "c1",
     name: "Ananya Sharma",
-    avatar: "👩‍💻",
     gradYear: 2027,
     targetRole: "Frontend Developer",
     skills: [
@@ -39,7 +35,6 @@ export const CANDIDATES: Candidate[] = [
   {
     id: "c2",
     name: "Rahul Verma",
-    avatar: "🧑‍💻",
     gradYear: 2026,
     targetRole: "Backend Developer",
     skills: [
@@ -56,7 +51,6 @@ export const CANDIDATES: Candidate[] = [
   {
     id: "c3",
     name: "Priya Nair",
-    avatar: "👩‍🎓",
     gradYear: 2027,
     targetRole: "Data Analyst",
     skills: [
@@ -72,7 +66,6 @@ export const CANDIDATES: Candidate[] = [
   {
     id: "c4",
     name: "Imran Khan",
-    avatar: "👨‍💻",
     gradYear: 2026,
     targetRole: "QA Engineer",
     skills: [
@@ -89,7 +82,6 @@ export const CANDIDATES: Candidate[] = [
   {
     id: "c5",
     name: "Divya Patil",
-    avatar: "👩‍🔬",
     gradYear: 2027,
     targetRole: "Frontend Developer",
     skills: [
@@ -105,7 +97,6 @@ export const CANDIDATES: Candidate[] = [
   {
     id: "c6",
     name: "Arjun Reddy",
-    avatar: "🧑‍🔧",
     gradYear: 2026,
     targetRole: "Backend Developer",
     skills: [
@@ -121,82 +112,23 @@ export const CANDIDATES: Candidate[] = [
   },
 ];
 
+/** Sample recruiter identity used to illustrate the dashboard. */
 export const RECRUITER = {
   name: "Riya Mehta",
   role: "Talent Lead",
   company: "PixelForge Labs",
-  avatar: "👩‍💼",
   verified: true,
   plan: "Growth",
 };
 
+/** Sample admin identity. */
 export const ADMIN = {
   name: "Saurabh K.",
   role: "Platform Admin",
-  avatar: "🛡️",
 };
 
-/** Recruiter verification queue (fake sign-ups awaiting admin review). */
-export const PENDING_RECRUITERS = [
-  {
-    id: "r1",
-    name: "Karan Singh",
-    email: "karan@hiringbird.in",
-    company: "HiringBird Consulting",
-    domain: "hiringbird.in",
-    jobsRequested: 3,
-    daysWaiting: 2,
-    risk: "medium" as const,
-  },
-  {
-    id: "r2",
-    name: "Neha Gupta",
-    email: "neha.hr@cloudzen.io",
-    company: "CloudZen Technologies",
-    domain: "cloudzen.io",
-    jobsRequested: 5,
-    daysWaiting: 0,
-    risk: "low" as const,
-  },
-  {
-    id: "r3",
-    name: "Fake McFakeface",
-    email: "mcfake@gmail.com",
-    company: "Dream Jobs Corp",
-    domain: "gmail.com",
-    jobsRequested: 50,
-    daysWaiting: 5,
-    risk: "high" as const,
-  },
-];
-
-/** Assessment integrity flags raised by the test player. */
-export const INTEGRITY_FLAGS = [
-  {
-    id: "f1",
-    candidate: "Test User #4821",
-    skill: "javascript",
-    reason: "7 tab switches during test",
-    severity: "high" as const,
-    when: "2h ago",
-  },
-  {
-    id: "f2",
-    candidate: "Ananya Sharma",
-    skill: "react",
-    reason: "1 tab switch (below threshold)",
-    severity: "low" as const,
-    when: "1d ago",
-  },
-  {
-    id: "f3",
-    candidate: "Test User #5107",
-    skill: "sql",
-    reason: "Answers submitted at implausible speed (avg 4s/question)",
-    severity: "medium" as const,
-    when: "3h ago",
-  },
-];
+// TODO(real): integrity flags will come from a server-side attempt
+// reviewer. Nothing is imported or seeded in code any more.
 
 export function candidateById(id: string): Candidate | undefined {
   return CANDIDATES.find((c) => c.id === id);

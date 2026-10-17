@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkillBridge — Project Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FFF9F6;
+    --ink: #0F151D;
+    --coral: #FF8A5E;
+    --coral-deep: #FF7448;
+    --gold: #FFB020;
+    --verify: #2F7D4F;
+    --line: #F0E2D9;
+    --tile: #F8EFE9;
+    --list: #FFF3EC;
+    --canvas: #FFFFFF;
+    --muted: #55606E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 56px 28px 96px; }
+
+  /* ── Hero ─────────────────────────────── */
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--coral-deep); margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(38px, 6vw, 58px);
+    font-weight: 800; letter-spacing: -0.035em; line-height: 1.05;
+    margin-bottom: 18px;
+  }
+  h1 .accent { color: var(--coral); }
+  .lede { font-size: 19px; color: var(--muted); max-width: 640px; margin-bottom: 28px; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
+  .pill {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500;
+    padding: 7px 16px; border-radius: 999px; background: var(--canvas);
+    border: 1px solid var(--line); color: var(--ink);
+  }
+  .pill.hot { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .pill.out { background: #EAF3EE; color: var(--verify); border-color: #D3E6DC; }
+
+  /* ── Sections ─────────────────────────── */
+  section { margin-bottom: 56px; }
+  .sec-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--coral); margin-bottom: 8px;
+  }
+  h2 { font-size: 27px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 14px; }
+  p.desc { color: var(--muted); max-width: 700px; margin-bottom: 22px; }
+
+  /* ── Cards ────────────────────────────── */
+  .grid { display: grid; gap: 14px; }
+  .grid.two { grid-template-columns: 1fr 1fr; }
+  .grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 760px) { .grid.two, .grid.three { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--canvas); border: 1px solid var(--line);
+    border-radius: 20px; padding: 22px 24px;
+  }
+  .card.tinted { background: var(--tile); border-color: transparent; }
+  .card h3 { font-size: 16.5px; font-weight: 650; letter-spacing: -0.015em; margin: 10px 0 7px; }
+  .card p { font-size: 14.5px; color: var(--muted); }
+  .icon {
+    width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--ink); color: var(--coral); font-size: 17px; font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── Number stats band ─────────────────── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    background: var(--ink); border-radius: 24px; padding: 30px 28px; color: var(--bg);
+  }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat b { display: block; font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+  .stat span { font-size: 12.5px; color: #B7BFC9; font-family: 'IBM Plex Mono', monospace; }
+  .stat b em { font-style: normal; color: var(--coral); }
+
+  /* ── Flow ─────────────────────────────── */
+  .flow { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+  .step {
+    flex: 1 1 200px; background: var(--list); border: 1px solid var(--line);
+    border-radius: 18px; padding: 18px 20px; position: relative;
+  }
+  .step .num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+    color: var(--coral-deep); margin-bottom: 6px;
+  }
+  .step b { display: block; font-size: 15.5px; font-weight: 650; margin-bottom: 4px; }
+  .step p { font-size: 13.5px; color: var(--muted); }
+
+  /* ── Lists ────────────────────────────── */
+  ul.clean { list-style: none; }
+  ul.clean li {
+    padding: 12px 0 12px 26px; border-bottom: 1px dashed var(--line);
+    font-size: 14.5px; position: relative;
+  }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean li::before {
+    content: "→"; position: absolute; left: 0; color: var(--coral); font-weight: 700;
+  }
+  ul.clean li b { font-weight: 650; }
+  ul.clean li code {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+    background: var(--tile); padding: 2px 7px; border-radius: 7px;
+  }
+
+  /* ── Stack table ──────────────────────── */
+  table.stack { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--canvas); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+  table.stack th, table.stack td { text-align: left; padding: 13px 20px; font-size: 14px; border-bottom: 1px solid var(--line); }
+  table.stack th { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: var(--tile); font-weight: 600; }
+  table.stack tr:last-child td { border-bottom: none; }
+  td.layer { font-weight: 650; white-space: nowrap; }
+  td.tech { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink); }
+  td.why { color: var(--muted); }
+
+  /* ── Security callout ─────────────────── */
+  .callout {
+    border-left: 4px solid var(--verify); background: #EAF3EE;
+    border-radius: 14px; padding: 20px 24px; margin-top: 18px;
+  }
+  .callout b { color: var(--verify); }
+
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
+
+  @media print {
+    body { background: #fff; }
+    .wrap { padding: 24px; max-width: none; }
+  }
+  @page { margin: 14mm; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Final-Year Major Project · Skill-First Hiring Platform</div>
+    <h1>Skill<span class="accent">Bridge</span></h1>
+    <p class="lede">
+      A full-stack hiring platform built for tier-2/3 college students in India — where students
+      <b>learn from structured roadmaps</b>, <b>prove their skill through server-graded tests</b>,
+      and <b>get hired by verified recruiters</b>, closing the gap traditional resumes create.
+    </p>
+    <div class="pill-row">
+      <span class="pill hot">Next.js 14 · App Router</span>
+      <span class="pill">TypeScript</span>
+      <span class="pill">PostgreSQL · Neon</span>
+      <span class="pill">Tailwind CSS</span>
+      <span class="pill out">Zero-cost stack</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-label">At a Glance</div>
+    <h2>The Problem &amp; the Solution</h2>
+    <p class="desc">
+      Students from tier-2 and tier-3 colleges rarely get interviews because résumés carry no
+      verifiable proof of skill, and recruiters waste time filtering unqualified applications.
+      SkillBridge replaces the résumé-first model with a skill-first pipeline.
+    </p>
+    <div class="flow">
+      <div class="step">
+        <div class="num">01</div>
+        <b>Learn</b>
+        <p>4 role roadmaps (Frontend, Backend, Data Analyst, QA) broken into 42 structured lessons with inline quizzes.</p>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <b>Prove</b>
+        <p>Skill tests are timed, anti-cheat monitored and graded entirely on the server — scores are real, not self-reported.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <b>Get Hired</b>
+        <p>Verified recruiters post jobs; students apply with their verified skill scores attached to every application.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Built &amp; Verified</div>
+    <h2>Project by the Numbers</h2>
+    <div class="stats">
+      <div class="stat"><b>42</b><span>MDX lessons</span></div>
+      <div class="stat"><b>4</b><span>role roadmaps</span></div>
+      <div class="stat"><b>9</b><span>security hardening steps</span></div>
+      <div class="stat"><b>5</b><span>database tables · live Neon Postgres</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Feature Deep-Dive</div>
+    <h2>What the Platform Does</h2>
+    <div class="grid two">
+      <div class="card">
+        <div class="icon">L</div>
+        <h3>Learning Roadmaps</h3>
+        <p>42 MDX-rendered lessons across Frontend, Backend, Data Analyst and QA paths. Each lesson ends with an inline graded quiz; a link-checker and lesson-checker script keep content consistent (42/42 pass).</p>
+      </div>
+      <div class="card">
+        <div class="icon">T</div>
+        <h3>Verified Skill Tests</h3>
+        <p>20-minute timed tests. The answer key lives in a <code style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:#F8EFE9;padding:2px 7px;border-radius:7px;">server-only</code> module — answers never ship to the browser. Grading, percentiles and attempt limits are all server-side.</p>
+      </div>
+      <div class="card">
+        <div class="icon">R</div>
+        <h3>Recruiter Console</h3>
+        <p>Recruiters post real jobs and review an application pipeline (applied → shortlisted → challenged → interview → offer). Campus and tier information is hidden from recruiters by design to give every student a level playing field.</p>
+      </div>
+      <div class="card">
+        <div class="icon">A</div>
+        <h3>Admin Console</h3>
+        <p>Admins review and verify recruiter accounts through a server-driven verification queue, keeping the marketplace trustworthy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Engineering Detail</div>
+    <h2>Architecture &amp; Data Model</h2>
+    <table class="stack">
+      <tr><th>Layer</th><th>Technology</th><th>Why it was chosen</th></tr>
+      <tr><td class="layer">Frontend</td><td class="tech">Next.js 14.2.35 · React 18 · TypeScript · Tailwind</td><td class="why">App Router + React Server Components; MDX lessons render server-side with client JS disabled.</td></tr>
+      <tr><td class="layer">Database</td><td class="tech">PostgreSQL · Neon (serverless, pooled)</td><td class="why">5 tables — users, attempts, applications, posted_jobs, outbox — with FK constraints and indexes; auto-applied idempotent schema.</td></tr>
+      <tr><td class="layer">Auth</td><td class="tech">scrypt password hashing · HMAC-signed session cookies</td><td class="why">Password hashing via Node scrypt; sessions are tamper-proof signed tokens verified with Web Crypto in edge middleware using constant-time comparison.</td></tr>
+      <tr><td class="layer">Testing / QC</td><td class="tech">Curl-based e2e battery · check:lessons · check:links</td><td class="why">Full signup → login → test → grade → apply flow verified live against the real database.</td></tr>
+      <tr><td class="layer">3D / Visual</td><td class="tech">three.js · @react-three/fiber</td><td class="why">Animated WebGL hero on the landing page — demonstrates interactive graphics on a zero-cost stack.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <div class="sec-label">Security-First Design</div>
+    <h2>Hardening Highlights</h2>
+    <ul class="clean">
+      <li><b>Answer-key isolation</b> — quiz answers and explanations are imported <code>server-only</code>; only question stems and option labels reach the browser.</li>
+      <li><b>Signed test tickets</b> — grading requires an HMAC ticket bound to <code>{userId, skillId, iat}</code>; the endpoint independently re-checks the 20-minute and 90-second time windows and reject spoofed submissions.</li>
+      <li><b>Rate limiting</b> — 5 sign-in / sign-up attempts per 15 minutes per (IP + e-mail), throttling credential-stuffing and fake-account creation.</li>
+      <li><b>Role-gated zones with defence-in-depth</b> — middleware blocks /recruiter, /admin and all admin APIs; server layouts independently re-check role on every request.</li>
+      <li><b>Abuse-proof signup &amp; email</b> — admin roles impossible to self-register; all transactional e-mail HTML is untrusted-input-escaped with CTA-link sanitisation, and has end-to-end verified.</li>
+    </ul>
+    <div class="callout">
+      <b>Live-verified:</b> every one of these controls was confirmed on the running deployment — auth redirects 401/403/407, the 6th login in a row returns 429, admin signup returns 403, and grading without a signed ticket returns 400.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Honest Data Policy</div>
+    <h2>No Vanity Metrics</h2>
+    <p class="desc">
+      Landing-page statistics validate on real data sources, gated demo content (sample candidates, scripted testimonials, sample job cards) behind development mode. Recruiters never see a candidate's college or tier — performance and proof, not pedigree.
+    </p>
+  </section>
+
+  <section>
+    <div class="sec-label">Result</div>
+    <h2>Delivered &amp; Verified</h2>
+    <div class="grid three">
+      <div class="card tinted"><h3 style="margin-top:0;">Live backend</h3><p>Production-shaped Postgres on Neon, migrated from a JSON-file prototype, verified row-by-row — with no data loss.</p></div>
+      <div class="card tinted"><h3 style="margin-top:0;">Full e2e pass</h3><p>Signup → login → test → grading (100% score) → job application, plus a 9-step security battery, all green against real infrastructure.</p></div>
+      <div class="card tinted"><h3 style="margin-top:0;">Zero-cost stack</h3><p>Runs entirely on free tiers — Next.js + Neon + Resend's free email tier — making the project reproducible by any student.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    SKILLBRIDGE · skill-first hiring for tier-2/3 India · Next.js · TypeScript · Neon Postgres · three.js · ₹0 stack
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SkillBridge — Project Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FFFFFF; --ink: #0F151D; --coral: #FF8A5E; --coral-deep: #FF7448;
+    --gold: #FFB020; --verify: #2F7D4F; --line: #F0E2D9; --tile: #F8EFE9;
+    --list: #FFF3EC; --muted: #55606E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif; color: var(--ink);
+    font-size: 11pt; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .page { padding: 0; }
+
+  /* ── Cover ─────────────────────────────── */
+  .cover { height: 257mm; display: flex; flex-direction: column; justify-content: center; padding: 0 22mm; page-break-after: always; position: relative; }
+  .cover .kicker {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10pt; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--coral-deep); margin-bottom: 16mm;
+  }
+  .cover h1 { font-size: 54pt; font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; margin-bottom: 10mm; }
+  .cover h1 span { color: var(--coral); }
+  .cover .subtitle { font-size: 15pt; color: var(--muted); max-width: 150mm; margin-bottom: 18mm; }
+  .cover .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cover .pill {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9pt; padding: 6px 16px;
+    border-radius: 999px; border: 1px solid var(--line); background: var(--list);
+  }
+  .cover .pill.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cover .meta {
+    position: absolute; bottom: 18mm; left: 22mm; right: 22mm;
+    border-top: 2px solid var(--ink); padding-top: 6mm;
+    display: flex; justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace; font-size: 9pt; color: var(--muted);
+  }
+
+  /* ── Content pages ─────────────────────── */
+  section { page-break-before: always; padding: 0 18mm; }
+  .sec-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--coral); margin-bottom: 3mm; padding-top: 6mm;
+  }
+  h2 { font-size: 20pt; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 5mm; }
+  h3 { font-size: 12.5pt; font-weight: 650; margin: 6mm 0 2.5mm; }
+  p { margin-bottom: 4mm; color: #2A3440; }
+  p b { color: var(--ink); }
+  ul { margin: 0 0 4mm 5mm; }
+  li { margin-bottom: 2mm; padding-left: 4mm; position: relative; }
+  li::before { content: "→"; position: absolute; left: 0; color: var(--coral); font-weight: 700; }
+  code {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9.5pt;
+    background: var(--tile); padding: 1px 6px; border-radius: 5px;
+  }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 5mm; page-break-inside: avoid; }
+  th, td { text-align: left; padding: 8px 12px; font-size: 10pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--tile); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.k { font-weight: 650; white-space: nowrap; }
+
+  .callout {
+    border-left: 4px solid var(--verify); background: #EAF3EE; border-radius: 8px;
+    padding: 10px 16px; margin: 4mm 0; page-break-inside: avoid;
+  }
+  .callout b { color: var(--verify); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-bottom: 4mm; }
+  .mini { background: var(--list); border-radius: 10px; padding: 4mm 5mm; page-break-inside: avoid; }
+  .mini b { display: block; margin-bottom: 1.5mm; }
+  .mini p { font-size: 9.5pt; color: var(--muted); margin: 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; background: var(--ink); border-radius: 12px; padding: 8mm 10mm; margin-bottom: 6mm; page-break-inside: avoid; }
+  .stat b { display: block; font-size: 22pt; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
+  .stat b em { font-style: normal; color: var(--coral); }
+  .stat span { font-size: 8.5pt; color: #B7BFC9; font-family: 'IBM Plex Mono', monospace; }
+
+  footer.docfoot { text-align: center; padding: 8mm; font-family: 'IBM Plex Mono', monospace; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--line); margin: 8mm 18mm 0; }
+  @page { size: A4; margin: 18mm 16mm; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ COVER ═══════════ -->
+<div class="cover">
+  <div class="kicker">Major Project Report · Skill-First Hiring Platform</div>
+  <h1>Skill<span>Bridge</span></h1>
+  <p class="subtitle">
+    A full-stack web platform for tier-2/3 Indian college students: structured learning roadmaps,
+    server-graded skill tests, and a job pipeline with verified recruiters — proving that what
+    you can do matters more than where you studied.
+  </p>
+  <div class="pills">
+    <span class="pill dark">Next.js 14 · App Router</span>
+    <span class="pill">TypeScript 5</span>
+    <span class="pill">Tailwind CSS 3</span>
+    <span class="pill">PostgreSQL · Neon</span>
+    <span class="pill">three.js WebGL</span>
+    <span class="pill">₹0-cost stack</span>
+  </div>
+  <div class="meta">
+    <span>PROJECT REPORT</span><span>OCTOBER 2026</span>
+  </div>
+</div>
+
+<!-- ═══════════ 1. INTRO ═══════════ -->
+<section>
+  <div class="sec-label">01 · Introduction</div>
+  <h2>The Problem &amp; the Idea</h2>
+  <p>
+    In India, students from tier-2 and tier-3 colleges face a structural disadvantage: recruiters
+    filter first on college brand and pedigree, then on skills. Résumés carry no verifiable proof of
+    ability, so capable self-taught students never reach the interview stage — while recruiters sort
+    through hundreds of unqualified applications.
+  </p>
+  <p>
+    <b>SkillBridge</b> flips this model to skill-first: students <b>learn</b> from structured role
+    roadmaps, <b>prove</b> their ability through timed, server-graded tests whose scores cannot be
+    faked, and <b>get hired</b> by verified recruiters who see proof instead of pedigree. College
+    and tier information is deliberately hidden from recruiters — performance speaks, background doesn't.
+  </p>
+  <div class="stats">
+    <div class="stat"><b>42</b><span>MDX LESSONS</span></div>
+    <div class="stat"><b>4</b><span>ROLE ROADMAPS</span></div>
+    <div class="stat"><b>9</b><span>SECURITY STEPS</span></div>
+    <div class="stat"><b>5</b><span>DB TABLES · LIVE</span></div>
+  </div>
+  <div class="grid">
+    <div class="mini"><b>Learn</b><p>42 lessons across Frontend, Backend, Data Analyst and QA roadmaps, each with an inline graded quiz.</p></div>
+    <div class="mini"><b>Prove</b><p>20-minute timed tests, graded entirely server-side against a browser-invisible answer key.</p></div>
+    <div class="mini"><b>Get Hired</b><p>Verified recruiters post jobs; applications carry verified skill scores automatically.</p></div>
+    <div class="mini"><b>Verified everywhere</b><p>Admin verification queue for recruiters, rate-limited auth, signed test tickets.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════ 2. FEATURES ═══════════ -->
+<section>
+  <div class="sec-label">02 · Features</div>
+  <h2>What the Platform Does</h2>
+
+  <h3>2.1 · Learning Roadmaps</h3>
+  <p>
+    Four complete role tracks — <b>Frontend Developer</b> (15 topics), <b>Backend Developer</b> (12),
+    <b>Data Analyst</b> (8), and <b>QA / Testing</b> (7) — together 42 MDX-rendered lessons served as
+    React Server Components with client JS disabled for content. Each lesson ends with an inline
+    quiz; two project scripts (<code>check:lessons</code>, <code>check:links</code>) verify content
+    integrity (42/42 pass) on every run.
+  </p>
+
+  <h3>2.2 · Server-Graded Skill Tests</h3>
+  <p>
+    Skill tests are the trust anchor of the platform. The question bank, answers, and explanations
+    live in a module marked <code>server-only</code> — the browser receives only question stems and
+    option labels, never answers. Grading validates an HMAC-signed test ticket bound to
+    <code>{userId, skillId, iat}</code>, re-checks the 20-minute time window server-side, and enforces
+    a 3-attempts-per-30-days limit with a real percentile computed against all prior attempts.
+  </p>
+
+  <h3>2.3 · Jobs &amp; Application Pipeline</h3>
+  <p>
+    Recruiters post internships and full-time roles describing required skills. Students in a roadmap
+    can apply with one click; applications arrive with the student's verified test scores already
+    attached and a computed match-percent. Recruiters progress candidates through a five-stage
+    pipeline: <b>applied → shortlisted → challenge → interview → offer</b> (with rejection).
+  </p>
+
+  <h3>2.4 · Recruiter &amp; Admin Consoles</h3>
+  <p>
+    New recruiter accounts start <b>unverified</b> and cannot post jobs until an admin approves them
+    through a server-driven verification queue. Admins manage this from a dedicated console; every
+    admin and recruiter route is gated twice — once in edge middleware, once again in server layouts.
+  </p>
+
+  <h3>2.5 · Developer Inbox</h3>
+  <p>
+    Transactional emails (welcome, verification, application events) are rendered server-side with
+    untrusted-input escaping and safe-CTA-link sanitisation. Without an email-provider key they
+    persist to an <code>outbox</code> table viewable in a dev-only inbox, so the full flow is testable
+    end-to-end at zero cost; adding a Resend key switches delivery on without code changes.
+  </p>
+</section>
+
+<!-- ═══════════ 3. ARCHITECTURE ═══════════ -->
+<section>
+  <div class="sec-label">03 · Architecture</div>
+  <h2>System Design &amp; Stack</h2>
+
+  <h3>3.1 · Technology Choices</h3>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+    <tr><td class="k">Framework</td><td>Next.js 14.2.35 · App Router · React 18</td><td>Server Components for content-heavy pages; a single codebase for UI, API routes and auth.</td></tr>
+    <tr><td class="k">Language</td><td>TypeScript 5 (strict)</td><td>Type-safe contracts between client, server and database layers.</td></tr>
+    <tr><td class="k">Styling</td><td>Tailwind CSS 3 + custom design system</td><td>Nomu-inspired brand: coral/cream palette, Inter + IBM Plex Mono, paper-grain texture.</td></tr>
+    <tr><td class="k">Database</td><td>PostgreSQL 16 on Neon (serverless, pooled)</td><td>Free-tier serverless Postgres; lazy idempotent schema bootstrap on first use.</td></tr>
+    <tr><td class="k">Auth</td><td>scrypt hashing · HMAC session cookies · Web Crypto middleware</td><td>No third-party auth dependency; tamper-proof signed sessions verified at the edge.</td></tr>
+    <tr><td class="k">3D</td><td>three.js + @react-three/fiber</td><td>Animated WebGL hero demonstrating interactive graphics in the landing page.</td></tr>
+    <tr><td class="k">Lessons</td><td>next-mdx-remote v6 (RSC)</td><td>Static MDX rendering with zero client JS shipped for lesson bodies.</td></tr>
+  </table>
+
+  <h3>3.2 · Data Model (5 Tables)</h3>
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key columns</th></tr>
+    <tr><td class="k">users</td><td>All roles (student / recruiter / admin)</td><td>id (PK), email (unique), password_hash (scrypt), role, verified_recruiter</td></tr>
+    <tr><td class="k">attempts</td><td>Skill-test submissions</td><td>id (PK), user_id (FK → users), skill_id, score (0–100), percentile, passed, integrity_flags</td></tr>
+    <tr><td class="k">applications</td><td>Job applications</td><td>id (PK), job_id, student_id (FK → users), scores (jsonb), match_percent, stage (6-state check)</td></tr>
+    <tr><td class="k">posted_jobs</td><td>Verified-recruiter jobs</td><td>id (PK), recruiter_id (FK → users), role, company, skills (jsonb), type (check)</td></tr>
+    <tr><td class="k">outbox</td><td>Email log / delivery queue</td><td>id (PK), to_email, subject, html, kind, delivered ('resend' | 'outbox')</td></tr>
+  </table>
+  <p>
+    The schema is idempotent (<code>CREATE TABLE IF NOT EXISTS</code> plus indexes) and applied
+    automatically on first database use or manually via <code>npm run db:setup</code>, which also
+    migrates any legacy JSON-file data into Postgres.
+  </p>
+
+  <h3>3.3 · Dual-Backend Design</h3>
+  <p>
+    Every data store branches on one environment flag (<code>DATABASE_URL</code>): with it, all
+    persistence goes to Postgres; without it, the same interfaces fall back to JSON files. This let
+    the whole product be built and demoed offline first, then migrated to a real database with
+    <b>zero application-layer changes</b> — only the driver swapped underneath.
+  </p>
+
+  <div class="callout">
+    <b>Migration verified:</b> JSON → Neon migration moved all rows (users, attempts, applications,
+    jobs, outbox) with counts confirmed before and after, followed by a full end-to-end run against
+    the live database: login 200, questions 200 with zero answer leakage, grading 200 (score 100
+    persisted and confirmed row-by-row in Neon), signup 201.
+  </div>
+</section>
+
+<!-- ═══════════ 4. SECURITY ═══════════ -->
+<section>
+  <div class="sec-label">04 · Security</div>
+  <h2>Hardening, Verified Live</h2>
+  <p>
+    Nine security passes were implemented and each control was verified against the running
+    application with a curl battery:
+  </p>
+  <ul>
+    <li><b>Session integrity</b> — HMAC-signed cookie payload <code>{userId, role, exp}</code>; forged or expired tokens rejected in edge middleware via Web Crypto with constant-time comparison.</li>
+    <li><b>Defence-in-depth roles</b> — middleware gates /recruiter (recruiter|admin), /admin, and admin APIs; server layouts re-check the role independently on every request.</li>
+    <li><b>Answer-key isolation</b> — the test bank is <code>import "server-only"</code>; live verification confirmed the questions endpoint returns zero answers or explanations.</li>
+    <li><b>Signed grading tickets</b> — grade endpoint demands a valid HMAC ticket, independently re-enforces the 20-minute + 90-second window, and caps attempts at 3 per 30 days.</li>
+    <li><b>Rate limiting</b> — 5 login/signup attempts per 15 min per (IP + email); the 6th returns 429, verified.</li>
+    <li><b>Role-abuse prevention</b> — signup with role=admin is rejected 403, verified.</li>
+    <li><b>Password storage</b> — Node scrypt with per-user salt, never plaintext.</li>
+    <li><b>Email safety</b> — HTML-escaping of user input and sanitised CTA links; site URL derived from a single config module, not request headers.</li>
+    <li><b>Dev-tool exposure</b> — the developer inbox returns 404 in production; sample/demo content and fake metrics are gated to development mode.</li>
+  </ul>
+  <div class="callout">
+    <b>Live-verified results:</b> unauthenticated hits redirect (401/403/407), 6th rapid login → 429,
+    admin self-signup → 403, grading without a ticket → 400. Honest-data policy: landing-page
+    statistics come only from real data sources; recruiters never see college or tier.
+  </div>
+</section>
+
+<!-- ═══════════ 5. TEST & RESULTS ═══════════ -->
+<section>
+  <div class="sec-label">05 · Testing &amp; Results</div>
+  <h2>Verification &amp; Outcomes</h2>
+
+  <h3>5.1 · How It Was Tested</h3>
+  <table>
+    <tr><th>Check</th><th>Method</th><th>Result</th></tr>
+    <tr><td class="k">Content integrity</td><td><code>npm run check:lessons</code> · <code>check:links</code></td><td>42/42 lessons pass, all roadmap links resolve</td></tr>
+    <tr><td class="k">End-to-end flow</td><td>curl battery vs live Neon DB</td><td>login 200 → questions 200 (no leaks) → grade 200 → signup 201 → outbox grew</td></tr>
+    <tr><td class="k">Database migration</td><td>Row counts before/after + spot reads</td><td>All rows migrated, zero data loss</td></tr>
+    <tr><td class="k">Security battery</td><td>9-step control verification</td><td>All gates redirect/429/403/400 as designed</td></tr>
+    <tr><td class="k">Visual/3D</td><td>WebGL console check</td><td>three.js hero renders, 0 GL errors</td></tr>
+  </table>
+
+  <h3>5.2 · Current Limitations</h3>
+  <ul>
+    <li>Email delivery awaits a <code>RESEND_API_KEY</code> — messages persist to the outbox meanwhile.</li>
+    <li>Auth currently uses custom cookie sessions; OAuth (Google) sign-in is a planned extension.</li>
+    <li>The recruiter marketplace is seeded-data-level, not yet production-populated with real employers.</li>
+  </ul>
+
+  <h3>5.3 · Future Scope</h3>
+  <ul>
+    <li><b>Coding challenges</b> — in-browser compiler for hands-on role tests beyond MCQs.</li>
+    <li><b>Interview practice</b> — recorded mock-interview scoring and feedback.</li>
+    <li><b>Company-side dashboard analytics</b> — funnel metrics per job posting.</li>
+    <li><b>PWA + vernacular support</b> — offline-capable lessons in regional languages.</li>
+  </ul>
+</section>
+
+<!-- ═══════════ 6. CONCLUSION ═══════════ -->
+<section>
+  <div class="sec-label">06 · Conclusion</div>
+  <h2>Delivered &amp; What's Next</h2>
+  <p>
+    SkillBridge demonstrates that a single full-stack platform — learning content, anti-cheat
+    assessment, and a hiring marketplace — can be built and run entirely on free infrastructure,
+    with real database-backed state, verified security controls, and honest, non-inflated metrics.
+    The architecture separates trust-critical logic (grading, auth, roles) into server-only layers,
+    proving the design scales beyond a demo into a deployable product.
+  </p>
+  <div class="grid">
+    <div class="mini"><b>Delivered</b><p>Full platform: roadmaps, server-graded tests, jobs pipeline, recruiter/admin consoles, email system, live Neon Postgres backend.</p></div>
+    <div class="mini"><b>Skills demonstrated</b><p>Next.js App Router &amp; RSC, TypeScript, Postgres schema &amp; migration design, auth &amp; crypto, security hardening, WebGL, zero-cost DevOps.</p></div>
+  </div>
+  <footer class="docfoot">
+    SKILLBRIDGE · SKILL-FIRST HIRING FOR TIER-2/3 INDIA · NEXT.JS · TYPESCRIPT · NEON POSTGRES · THREE.JS · ₹0 STACK
+  </footer>
+</section>
+
+</body>
+</html>

@@ -9,8 +9,14 @@
 // The schema (scripts/schema.sql) is applied lazily and
 // idempotently on the first DB call — no separate migration step
 // needed for a fresh Neon project.
+//
+// TLS policy (CWE-295): remote connections always verify the
+// server certificate and hostname (rejectUnauthorized: true).
+// There is no fallback to unverified TLS; connections that cannot
+// complete a verified handshake fail loudly. Plaintext is only
+// allowed for localhost.
 // ─────────────────────────────────────────────────────────────
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { readFileSync } from "fs";
 import path from "path";
 
@@ -28,8 +34,9 @@ function getPool(): Pool {
     pool = new Pool({
       connectionString: cs,
       max: 3,
-      // Neon requires TLS; pg honours sslmode in the URL, this is the belt
-      ssl: isLocal ? undefined : { rejectUnauthorized: false },
+      ssl: isLocal
+        ? undefined
+        : { rejectUnauthorized: true }, // verified TLS — never disable for remote
     });
   }
   return pool;
@@ -47,6 +54,31 @@ export async function query<T = Record<string, unknown>>(
   } catch (err) {
     console.error("[db] query failed:", (err as Error).message);
     throw err;
+  }
+}
+
+/**
+ * Run fn inside one transaction. fn receives a PoolClient; commit
+ * on resolve, roll back on throw. Used for the attempt-quota lock.
+ */
+export async function withTransaction<T>(
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await getPool().connect();
+  try {
+    await client.query("begin");
+    const result = await fn(client);
+    await client.query("commit");
+    return result;
+  } catch (err) {
+    try {
+      await client.query("rollback");
+    } catch {
+      // rollback failures don't mask the original error
+    }
+    throw err;
+  } finally {
+    client.release();
   }
 }
 

@@ -1,39 +1,35 @@
 import { NextResponse } from "next/server";
 import { getUserFromToken, SESSION_COOKIE, type User } from "@/lib/auth";
-import { JOBS, skillById } from "@/lib/data";
+import { JOBS } from "@/lib/data";
 import {
   addApplication,
   applicationsByStudent,
+  applicationStages,
   applicationsForJob,
   attemptsByUser,
   findApplication,
   postedJobsByRecruiter,
   readPostedJobs,
-  updateApplicationStage,
+  toRecruiterView,
+  updateApplicationStageForRecruiter,
   type ApplicationStage,
 } from "@/lib/store";
+import { assertSameOrigin, readJson } from "@/lib/security";
 import { sendEmail, templates } from "@/lib/email";
 
-const STAGES: ApplicationStage[] = ["applied", "shortlisted", "challenge", "interview", "offer", "rejected"];
+const STAGES: ApplicationStage[] = applicationStages();
 
 function userFrom(req: Request): Promise<User | null> {
   const token = req.headers.get("cookie")?.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`))?.[1];
   return getUserFromToken(token);
 }
 
-/** Look up a job by id across the seed feed and recruiter-posted jobs. */
+/** Look up a published job by id across the seed feed and recruiter posts. */
 async function anyJob(jobId: string) {
   return (
     JOBS.find((j) => j.id === jobId) ??
     (await readPostedJobs()).find((j) => j.id === jobId)
   );
-}
-
-/** Job ids belonging to one recruiter (seed demo jobs + their own posts). */
-async function recruiterJobIds(user: User): Promise<string[]> {
-  const own = await postedJobsByRecruiter(user.id);
-  const seed = JOBS.filter((j) => j.company === user.company).map((j) => j.id);
-  return Array.from(new Set([...seed, ...own.map((j) => j.id)]));
 }
 
 /**
@@ -46,9 +42,15 @@ export async function POST(req: Request) {
   if (!user || user.role !== "student") {
     return NextResponse.json({ error: "Log in as a student to apply." }, { status: 401 });
   }
+  if (!(await assertSameOrigin(req))) {
+    return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+  }
+  const read = await readJson<{ jobId?: string }>(req);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
+  }
 
-  const { jobId } = (await req.json()) as { jobId?: string };
-  const job = await anyJob(jobId ?? "");
+  const job = await anyJob(read.data.jobId ?? "");
   if (!job) return NextResponse.json({ error: "Job not found." }, { status: 404 });
 
   if (await findApplication(job.id, user.id)) {
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
   }
   const matchPercent = Math.round(sum / Math.max(1, job.skills.length));
 
-  // NOTE: college is deliberately NOT stored — recruiters never see it
+  // college is deliberately NOT stored — recruiters never see it
   // (anti-bias decision, PRD F7.1).
   const app = await addApplication({
     jobId: job.id,
@@ -80,16 +82,23 @@ export async function POST(req: Request) {
     stage: "applied",
   });
 
-  // 📧 recruiter notification
-  void sendEmail({
-    to: "recruiter@skillbridge.local",
-    ...templates.applicationReceived(job.role, job.company, user.name),
-  });
+  // recruiter notification for a real (non-seed) job post
+  const posted = (await postedJobsByRecruiter(user.id)).length; // unused here; see below
+  void posted;
+  const realJob = (await readPostedJobs()).find((j) => j.id === job.id);
+  if (realJob) {
+    void sendEmail({
+      to: realJob.recruiterId, // TODO(real): route via the recruiter's actual email lookup
+      ...templates.applicationReceived(job.role, job.company, user.name),
+    });
+  }
+  // seed jobs (JOBS const) accept the application UI-wise but are not wired
+  // to any real recruiter identity, so no notification is sent for them.
 
   return NextResponse.json({ application: app }, { status: 201 });
 }
 
-/** GET /api/applications — student: mine; recruiter: their jobs' applicants (?jobId= optional). */
+/** GET /api/applications — student: mine; recruiter: their own jobs' applicants. */
 export async function GET(req: Request) {
   const user = await userFrom(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -98,12 +107,14 @@ export async function GET(req: Request) {
   const jobId = url.searchParams.get("jobId");
 
   if (user.role === "recruiter") {
-    const ids = await recruiterJobIds(user);
+    // authorization = server-owned recruiter_id on posted_jobs only.
+    // No company-name matching: a self-declared company grants nothing.
+    const own = await postedJobsByRecruiter(user.id);
+    const ids = own.map((j) => j.id);
     const wanted = jobId ? ids.filter((id) => id === jobId) : ids;
-    // strip any legacy college field — recruiters never see it
     const all = (await Promise.all(wanted.map((id) => applicationsForJob(id))))
       .flat()
-      .map(({ college, ...rest }) => rest);
+      .map(toRecruiterView); // drops college in every response
     return NextResponse.json({ applications: all });
   }
 
@@ -116,21 +127,28 @@ export async function PATCH(req: Request) {
   if (!user || user.role !== "recruiter") {
     return NextResponse.json({ error: "Recruiter access required." }, { status: 401 });
   }
-
-  const { id, stage } = (await req.json()) as { id?: string; stage?: ApplicationStage };
+  if (!(await assertSameOrigin(req))) {
+    return NextResponse.json({ error: "Cross-origin request rejected." }, { status: 403 });
+  }
+  const read = await readJson<{ id?: string; stage?: ApplicationStage }>(req);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
+  }
+  const { id, stage } = read.data;
   if (!id || !stage || !STAGES.includes(stage)) {
     return NextResponse.json({ error: "id and a valid stage are required." }, { status: 400 });
   }
 
-  const app = await updateApplicationStage(id, stage);
+  // ownership lives in the SQL (job must belong to this recruiter);
+  // nothing is mutated and nothing is returned when it does not.
+  const app = await updateApplicationStageForRecruiter(id, stage, user.id);
   if (!app) return NextResponse.json({ error: "Application not found." }, { status: 404 });
 
   const job = await anyJob(app.jobId);
-  // 📧 student notification on stage change
   void sendEmail({
     to: app.studentEmail,
     ...templates.applicationUpdate(app.studentName, job?.role ?? app.jobId, job?.company ?? "the company", stage),
   });
 
-  return NextResponse.json({ application: app });
+  return NextResponse.json({ application: toRecruiterView(app) });
 }

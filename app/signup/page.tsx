@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { roleHome, safeNextForRole } from "@/lib/safe-next";
 
 type Role = "student" | "recruiter";
 
@@ -18,30 +19,57 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedRole = params.get("role");
+    if (requestedRole === "student" || requestedRole === "recruiter") {
+      setRole(requestedRole);
+    } else if (
+      params.get("next") === "/recruiter" ||
+      params.get("next")?.startsWith("/recruiter/")
+    ) {
+      setRole("recruiter");
+    }
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name, email, password, role,
-        college: role === "student" ? college : undefined,
-        gradYear: role === "student" ? Number(gradYear) : undefined,
-        company: role === "recruiter" ? company : undefined,
-      }),
-    });
-    const data = (await res.json()) as { error?: string; user?: { role: string } };
-    setBusy(false);
-    if (!res.ok || !data.user) {
-      setError(data.error ?? "Signup failed");
-      return;
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, email, password, role,
+          college: role === "student" ? college : undefined,
+          gradYear: role === "student" ? Number(gradYear) : undefined,
+          company: role === "recruiter" ? company : undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        user?: { role: Role };
+      };
+      if (!res.ok || !data.user) {
+        setError(data.error ?? "Signup failed. Please try again.");
+        return;
+      }
+      window.dispatchEvent(new CustomEvent("sb-session", { detail: data.user }));
+      const next = new URLSearchParams(window.location.search).get("next");
+      const target = safeNextForRole(
+        next,
+        data.user.role,
+        window.location.origin,
+        roleHome(data.user.role)
+      );
+      router.push(target);
+      router.refresh();
+    } catch {
+      setError("Could not create your account. Check your connection and try again.");
+    } finally {
+      setBusy(false);
     }
-    // update header instantly (SessionProvider listens for this)
-    window.dispatchEvent(new CustomEvent("sb-session", { detail: data.user }));
-    router.push(data.user.role === "recruiter" ? "/recruiter" : "/roadmaps");
-    router.refresh();
   }
 
   return (
@@ -110,7 +138,7 @@ export default function SignupPage() {
                 <label className="label" htmlFor="company">Company</label>
                 <input id="company" className="input" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="PixelForge Labs" required />
                 <p className="mt-1 text-xs text-ink-3">
-                  Recruiter accounts are reviewed before posting jobs — you'll get an email when verified.
+                  Recruiter accounts are reviewed before posting jobs — you&apos;ll get an email when verified.
                 </p>
               </div>
             )}

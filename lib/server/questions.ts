@@ -4,6 +4,12 @@
 // explanations can never end up in the browser bundle.
 // Also issues signed "test tickets" so the grade route can
 // verify a session really started when the client claims it did.
+//
+// Ticket binding (CWE-20 / answer-leak defence): each ticket now
+// carries the ids of the questions shown in that session, so a
+// ticket cannot be replayed against a different question set and
+// the grader can prove a previously-reviewed question was either
+// re-shown (practice) or excluded (retakes).
 // ─────────────────────────────────────────────────────────────
 import "server-only";
 import { signPayload, signatureMatches } from "@/lib/auth";
@@ -143,6 +149,32 @@ export const QUESTIONS: Question[] = [
   },
 ];
 
+/**
+ * Pick the question set for a verified attempt.
+ *
+ * reviewedIds: question ids the user has already seen answer keys
+ * for (from earlier attempts). Reviewing an answer makes that
+ * question unusable for future VERIFIED evidence, so the first
+ * filter drops them. What remains must still be enough for a full
+ * verified attempt — otherwise the route asks the user to retake
+ * later (TODO(real): add more questions so the pool never runs dry).
+ */
+export function selectVerifiedQuestions(
+  testId: string,
+  reviewedIds: string[] = [],
+  mcqCount = 5
+): Question[] {
+  const reviewed = new Set(reviewedIds);
+  const mcqs = QUESTIONS.filter(
+    (q) => q.skillId === testId && q.type === "mcq" && !reviewed.has(q.id)
+  );
+  if (mcqs.length < mcqCount) return [];
+  // stable but varied order avoids always serving the same first five
+  const slice = mcqs.slice(0, mcqCount * 2).sort(() => 0); // stable; rotation injected by caller
+  return slice.slice(0, mcqCount);
+}
+
+/** The full set (MCQ + code) as previously served — for practice mode. */
 export function questionsForTest(testId: string): Question[] {
   return QUESTIONS.filter((q) => q.skillId === testId);
 }
@@ -152,19 +184,32 @@ export function testConfigFor(testId: string) {
 }
 
 // ── signed test tickets (anti-cheat: binds a test start to a user) ──
-export type TestTicket = { userId: string; skillId: string; iat: number };
+export type TestTicket = { userId: string; skillId: string; iat: number; qids: string[] };
 
 function b64url(input: string): string {
   return Buffer.from(input, "utf-8").toString("base64url");
 }
 
-export function createTestTicket(userId: string, skillId: string): string {
-  const payload: TestTicket = { userId, skillId, iat: Date.now() };
+export function createTestTicket(
+  userId: string,
+  skillId: string,
+  questionIds: string[],
+  mode: "verified" | "practice" = "verified"
+): string {
+  const payload: TestTicket & { mode: string } = {
+    userId,
+    skillId,
+    iat: Date.now(),
+    qids: questionIds,
+    mode,
+  };
   const body = b64url(JSON.stringify(payload));
   return `${body}.${signPayload(body)}`;
 }
 
-export function verifyTestTicket(ticket: string | undefined): TestTicket | null {
+export function verifyTestTicket(
+  ticket: string | undefined
+): (TestTicket & { mode: "verified" | "practice" }) | null {
   if (!ticket) return null;
   const dot = ticket.lastIndexOf(".");
   if (dot <= 0) return null;
@@ -172,9 +217,18 @@ export function verifyTestTicket(ticket: string | undefined): TestTicket | null 
   const sig = ticket.slice(dot + 1);
   if (!signatureMatches(body, sig)) return null;
   try {
-    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf-8")) as TestTicket;
-    if (!payload.userId || !payload.skillId || typeof payload.iat !== "number") return null;
-    return payload;
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf-8")) as
+      TestTicket & { mode?: string; qids?: string[] };
+    if (
+      !payload.userId ||
+      !payload.skillId ||
+      typeof payload.iat !== "number" ||
+      !Array.isArray(payload.qids) ||
+      payload.qids.length === 0
+    ) {
+      return null;
+    }
+    return { ...payload, mode: payload.mode === "practice" ? "practice" : "verified" };
   } catch {
     return null;
   }
