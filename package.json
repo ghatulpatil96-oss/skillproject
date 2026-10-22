@@ -11,7 +11,9 @@
     "check:links": "node scripts/check-links.mjs",
     "check:lessons": "node scripts/check-lessons.mjs",
     "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs",
-    "db:disable-demo": "node --env-file-if-exists=.env.local scripts/disable-demo-users.mjs"
+    "db:disable-demo": "node --env-file-if-exists=.env.local scripts/disable-demo-users.mjs",
+    "db:purge": "node --env-file-if-exists=.env.local --import tsx scripts/purge-demo-data.ts",
+    "email:test": "node --env-file-if-exists=.env.local --import tsx scripts/send-test-email.ts"
   },
   "dependencies": {
     "next": "14.2.35",
@@ -19,7 +21,8 @@
     "pg": "^8.23.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -31,6 +34,7 @@
     "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
+    "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

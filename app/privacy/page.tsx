@@ -23,6 +23,8 @@ const SECTIONS: { title: string; body: string[] }[] = [
       "To run the product: show your progress, verify and display test scores, and match you to relevant jobs.",
       "To let recruiters discover you by verified skill scores — never by college tier.",
       "To send transactional email (welcome, scorecards, recruiter verification) via our email provider.",
+      "To notify you of successful logins when the account setting is enabled. Login notices include time, browser and OS, approximate location when available, and a partially masked IP address.",
+      "Password-change and password-reset security notices are always sent.",
     ],
   },
   {
@@ -49,6 +51,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: "6. Your choices",
     body: [
       "You can view everything stored on your profile at any time.",
+      "You can turn login-notification emails on or off from your profile. Security emails for password changes and password resets cannot be disabled.",
       "Want your account deleted or your data exported? Email us and we'll action it within 30 days.",
     ],
   },

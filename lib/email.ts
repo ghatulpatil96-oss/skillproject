@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-// Email pipeline — sends via Resend when RESEND_API_KEY is set;
-// otherwise stores to a JSON outbox rendered in /dev-inbox.
+// Email pipeline — production sends via Resend; local development
+// without a key stores to an outbox rendered in /dev-inbox.
 // Covers PRD F5.4 notifications with clean HTML templates.
 //
 // Security: every interpolated value passes escapeHtml(), and
@@ -12,8 +12,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import { getSiteUrl } from "@/lib/site";
 import { hasDb, query } from "@/lib/db";
+import { validateProductionEmailConfiguration } from "@/lib/email-config";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_DIR = process.env.SKILLBRIDGE_DATA_DIR ?? path.join(process.cwd(), ".data");
 const OUTBOX_FILE = path.join(DATA_DIR, "outbox.json");
 
 export type Email = {
@@ -24,7 +25,10 @@ export type Email = {
   text: string;
   kind: string;
   createdAt: string;
-  delivered: "resend" | "outbox";
+  delivered: "resend" | "outbox" | "failed";
+  status: "sent" | "failed" | "outbox";
+  providerId?: string;
+  error?: string;
 };
 
 // ── outbox persistence (Postgres when DATABASE_URL is set) ──
@@ -44,6 +48,26 @@ async function saveOutboxEmail(email: Email): Promise<void> {
   await fs.writeFile(OUTBOX_FILE, JSON.stringify(outbox.slice(-200), null, 2));
 }
 
+async function logEmailAttempt(input: {
+  to: string;
+  kind: string;
+  status: Email["status"];
+  providerId?: string;
+  error?: string;
+  createdAt: string;
+}): Promise<void> {
+  if (hasDb()) {
+    await query(
+      `insert into email_log (to_email, template, status, provider_id, error, created_at)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [input.to, input.kind, input.status, input.providerId ?? null, input.error ?? null, input.createdAt]
+    );
+    return;
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("[SkillBridge] DATABASE_URL is required to log production email attempts.");
+  }
+}
 async function readOutboxJson(): Promise<Email[]> {
   try {
     return JSON.parse(await fs.readFile(OUTBOX_FILE, "utf-8")) as Email[];
@@ -70,11 +94,11 @@ function esc(value: unknown): string {
 export function safeCtaUrl(url: string): string {
   const base = getSiteUrl();
   try {
-    const resolved = url.startsWith("/") ? new URL(base + url) : new URL(url);
-    if (resolved.origin !== new URL(base).origin) return base + "/";
+    const resolved = url.startsWith("/") ? new URL(url, base) : new URL(url);
+    if (resolved.origin !== new URL(base).origin) return new URL("/", base).toString();
     return resolved.toString();
   } catch {
-    return base + "/";
+    return new URL("/", base).toString();
   }
 }
 
@@ -82,12 +106,12 @@ export function safeCtaUrl(url: string): string {
 function wrap(title: string, bodyHtml: string, cta?: { label: string; url: string }): string {
   const safeCta = cta ? { label: esc(cta.label), url: safeCtaUrl(cta.url) } : undefined;
   return `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#FFF9F6;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <div style="max-width:560px;margin:32px auto;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #F0E2D9;">
-    <div style="background:#FF8A5E;padding:20px 32px;">
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0" /><style>@media(max-width:600px){.email-card{margin:12px auto!important}.email-content{padding:24px 18px!important}.email-header{padding:18px!important}}</style></head><body style="margin:0;padding:0;background:#FFF9F6;font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div class="email-card" style="width:calc(100% - 24px);max-width:560px;margin:32px auto;background:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #F0E2D9;">
+    <div class="email-header" style="background:#FF8A5E;padding:20px 32px;">
       <span style="color:#0F151D;font-size:20px;font-weight:700;letter-spacing:-0.5px;">SkillBridge<span style="color:#0F151D;">.</span></span>
     </div>
-    <div style="padding:32px;">
+    <div class="email-content" style="padding:32px;">
       <h1 style="margin:0 0 12px;font-size:20px;color:#0F151D;">${esc(title)}</h1>
       <div style="font-size:14px;line-height:1.7;color:#4A5563;">${bodyHtml}</div>
       ${
@@ -111,10 +135,21 @@ export async function sendEmail(input: {
   kind: string;
   title: string;
   bodyHtml: string;
+  text?: string;
   cta?: { label: string; url: string };
 }): Promise<Email> {
+  validateProductionEmailConfiguration();
+  if (process.env.NODE_ENV === "production" && !hasDb()) {
+    throw new Error("[SkillBridge] DATABASE_URL is required for production email logging.");
+  }
+
   const html = wrap(input.title, input.bodyHtml, input.cta);
-  const text = input.bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const textBody =
+    input.text ?? input.bodyHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const text = `${textBody}${
+    input.cta ? `\n\n${input.cta.label}: ${safeCtaUrl(input.cta.url)}` : ""
+  }`;
+  const createdAt = new Date().toISOString();
 
   const email: Email = {
     id: `e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
@@ -123,8 +158,9 @@ export async function sendEmail(input: {
     html,
     text,
     kind: input.kind,
-    createdAt: new Date().toISOString(),
+    createdAt,
     delivered: "outbox",
+    status: "outbox",
   };
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -137,31 +173,144 @@ export async function sendEmail(input: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM ?? "SkillBridge <onboarding@resend.dev>",
+          from: process.env.EMAIL_FROM,
           to: [input.to],
           subject: input.subject,
           html,
+          text,
         }),
       });
-      if (res.ok) {
+      let response: {
+        id?: unknown;
+        message?: unknown;
+        name?: unknown;
+        error?: { message?: unknown; name?: unknown; code?: unknown } | string;
+      } = {};
+      let errorMessage: string | undefined;
+      try {
+        response = (await res.json()) as typeof response;
+      } catch {
+        errorMessage = `Resend returned an unreadable response (HTTP ${res.status}).`;
+      }
+      const providerErrorParts =
+        typeof response.error === "object" && response.error
+          ? [response.error.message, response.error.name, response.error.code]
+          : [response.error, response.message, response.name];
+      const providerError = providerErrorParts
+        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .join(": ") || undefined;
+      if (res.ok && !providerError && typeof response.id === "string" && response.id) {
         email.delivered = "resend";
+        email.status = "sent";
+        email.providerId = response.id;
       } else {
-        // never fail silently — log status + body so delivery issues surface
-        const bodyText = await res.text().catch(() => "");
-        console.error(`[email] Resend returned ${res.status} for ${input.kind} → ${input.to}: ${bodyText.slice(0, 300)}`);
+        errorMessage ??=
+          providerError ?? `Resend did not accept the email (HTTP ${res.status}).`;
+      }
+      if (errorMessage) {
+        email.status = "failed";
+        email.error = errorMessage.slice(0, 500);
+        console.error(`[email] Resend send failed for template "${input.kind}": ${email.error}`);
       }
     } catch (err) {
-      console.error(`[email] Resend request failed for ${input.kind} → ${input.to}:`, err);
+      email.status = "failed";
+      email.error = err instanceof Error ? err.message.slice(0, 500) : "Resend request failed.";
+      console.error(`[email] Resend request failed for template "${input.kind}".`);
     }
   }
 
-  await saveOutboxEmail(email);
+  if (email.status === "outbox") {
+    if (process.env.NODE_ENV === "production") {
+      email.status = "failed";
+      email.error = "Resend is not configured; production email cannot use the development outbox.";
+    } else {
+      await saveOutboxEmail(email);
+    }
+  }
+  if (email.status === "failed") email.delivered = "failed";
+  await logEmailAttempt({
+    to: input.to,
+    kind: input.kind,
+    status: email.status,
+    providerId: email.providerId,
+    error: email.error,
+    createdAt,
+  });
   return email;
 }
 
 // ── notification templates (PRD F5.4) ────────────────────────
 // Every interpolated value is escaped; numbers are coerced via Number().
 export const templates = {
+  loginNotice(
+    name: string,
+    details: { time: string; browser: string; operatingSystem: string; location?: string; ip: string }
+  ) {
+    const locationLine = details.location ? `<li><strong>Approximate location:</strong> ${esc(details.location)}</li>` : "";
+    const plainLocation = details.location ? `\nApproximate location: ${details.location}` : "";
+    return {
+      kind: "login-alert",
+      subject: "New login to your SkillBridge account",
+      title: "New login to your SkillBridge account",
+      bodyHtml: `<p>Hi ${esc(name)},</p>
+        <p>Your SkillBridge account was just used to log in. If this was you, no action is needed.</p>
+        <ul style="padding-left:20px;line-height:1.8">
+          <li><strong>Time:</strong> ${esc(details.time)}</li>
+          <li><strong>Browser:</strong> ${esc(details.browser)}</li>
+          <li><strong>Operating system:</strong> ${esc(details.operatingSystem)}</li>
+          ${locationLine}
+          <li><strong>IP address:</strong> ${esc(details.ip)}</li>
+        </ul>`,
+      text: `Hi ${name},\n\nYour SkillBridge account was just used to log in. If this was you, no action is needed.\n\nTime: ${details.time}\nBrowser: ${details.browser}\nOperating system: ${details.operatingSystem}${plainLocation}\nIP address: ${details.ip}`,
+      cta: { label: "Wasn't you? Reset your password", url: "/forgot-password" },
+    };
+  },
+
+  passwordChanged(
+    name: string,
+    details: { time: string; browser: string; operatingSystem: string },
+    resetUrl = "/forgot-password"
+  ) {
+    return {
+      kind: "password-changed",
+      subject: "Your password was changed",
+      title: "Your password was changed",
+      bodyHtml: `<p>Hi ${esc(name)},</p>
+        <p>The password for your SkillBridge account was changed.</p>
+        <ul style="padding-left:20px;line-height:1.8">
+          <li><strong>Time:</strong> ${esc(details.time)}</li>
+          <li><strong>Browser:</strong> ${esc(details.browser)}</li>
+          <li><strong>Operating system:</strong> ${esc(details.operatingSystem)}</li>
+        </ul>`,
+      text: `Hi ${name},\n\nThe password for your SkillBridge account was changed.\n\nTime: ${details.time}\nBrowser: ${details.browser}\nOperating system: ${details.operatingSystem}`,
+      cta: { label: "Wasn't you? Reset it now", url: resetUrl },
+    };
+  },
+
+  passwordReset(name: string, resetUrl: string) {
+    return {
+      kind: "password-reset",
+      subject: "Reset your SkillBridge password",
+      title: "Reset your password",
+      bodyHtml: `<p>Hi ${esc(name)},</p>
+        <p>We received a request to reset your SkillBridge password. This link expires in one hour and can only be used once. If you did not request this, you can ignore this email.</p>`,
+      text: `Hi ${name},\n\nWe received a request to reset your SkillBridge password. This link expires in one hour and can only be used once. If you did not request this, you can ignore this email.`,
+      cta: { label: "Reset password", url: resetUrl },
+    };
+  },
+
+  contactMessage(name: string, email: string, topic: string, message: string) {
+    return {
+      kind: "contact",
+      subject: "New SkillBridge contact message",
+      title: "New contact form message",
+      bodyHtml: `<p><strong>From:</strong> ${esc(name)} &lt;${esc(email)}&gt;</p>
+        <p><strong>Topic:</strong> ${esc(topic)}</p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0" />
+        <p>${esc(message).replace(/\n/g, "<br/>")}</p>`,
+    };
+  },
+
   welcome(name: string, role: string) {
     return {
       kind: "welcome",
@@ -264,6 +413,7 @@ export async function listOutbox(limit = 100): Promise<Email[]> {
       kind: r.kind,
       createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : new Date(r.created_at).toISOString(),
       delivered: (r.delivered === "resend" ? "resend" : "outbox") as Email["delivered"],
+      status: r.delivered === "resend" ? "sent" : "outbox",
     }));
   }
   return (await readOutboxJson()).reverse().slice(0, limit);

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
-import { ROADMAPS, JOBS, skillById } from "@/lib/data";
+import LoginEmailPreference from "@/components/LoginEmailPreference";
+import { ROADMAPS, skillById, type Job } from "@/lib/data";
 import { useProgress, roadmapProgress } from "@/lib/progress";
 import { useSession } from "@/components/SessionProvider";
 
@@ -36,6 +37,7 @@ export default function ProfilePage() {
   const progress = useProgress();
   const { user, loading } = useSession();
   const [apps, setApps] = useState<Application[] | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
   // best attempt per skill — SERVER data (attempts store), not localStorage
   const [best, setBest] = useState<Record<string, Attempt>>({});
 
@@ -47,14 +49,22 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    fetch("/api/jobs", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { jobs: [] }))
+      .then((d: { jobs: Job[] }) => setJobs(d.jobs))
+      .catch(() => setJobs([]));
+  }, []);
+
+  useEffect(() => {
     // scorecards come from the server attempt store; localStorage is only a cache
     fetch("/api/tests/grade", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { attempts: [] }))
       .then((d: { attempts: Attempt[] }) => {
         const map: Record<string, Attempt> = {};
         for (const a of d.attempts) {
+          if (!a.passed) continue;
           const cur = map[a.skillId];
-          if (!cur || (a.passed && !cur.passed) || a.score > cur.score) map[a.skillId] = a;
+          if (!cur || a.score > cur.score) map[a.skillId] = a;
         }
         setBest(map);
       })
@@ -99,9 +109,6 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-extrabold">{displayName}</h1>
-                {user?.role === "student" && (
-                  <span className="chip bg-verify/10 text-verify">🟢 Open to work</span>
-                )}
               </div>
               <p className="text-sm text-ink-2">
                 {user?.role === "student" ? "Aspiring developer · " : ""}
@@ -110,12 +117,12 @@ export default function ProfilePage() {
             </div>
             <div className="text-center">
               <div className="text-4xl font-extrabold text-accent">{profileScore}</div>
-              <div className="text-xs text-ink-2">Profile score</div>
+              <div className="text-xs text-ink-2">Learning profile score</div>
             </div>
           </div>
           {jobReady && (
-            <div className="mt-4 rounded-lg bg-verify/5 p-3 text-sm font-semibold text-verify">
-              <strong>Job-Ready badge earned.</strong> You appear in recruiter &quot;verified only&quot; searches.
+            <div className="mt-4 rounded-lg bg-tile p-3 text-sm text-ink-2">
+              <strong>Roadmap checklist complete.</strong> This progress is self-reported and stored in this browser; it is not a verified job-ready credential.
             </div>
           )}
           {!user && !loading && (
@@ -128,12 +135,14 @@ export default function ProfilePage() {
           )}
         </section>
 
+        {user && <LoginEmailPreference />}
+
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           {/* ── verified scorecards (server attempts) ── */}
           <section className="card p-6">
-            <h2 className="text-lg font-bold">Verified Skill Scorecards</h2>
+            <h2 className="text-lg font-bold">Passed Skill Assessments</h2>
             <p className="mt-1 text-xs text-ink-3">
-              Recruiter-visible proof from server-graded attempts. Valid 6 months from issue date.
+              Passed MCQ assessments are graded on the server. Coding exercises are practice-only and are not graded.
             </p>
             {verifiedSkills.length === 0 ? (
               <div className="mt-6 rounded-lg border border-dashed border-line p-8 text-center">
@@ -159,9 +168,7 @@ export default function ProfilePage() {
                       <div className="min-w-0 flex-1">
                         <div className="font-bold">
                           {skill.name}{" "}
-                          {passed && (
-                            <span className="chip ml-1 bg-verify/10 text-verify">✓ Verified</span>
-                          )}
+                          <span className="chip ml-1 bg-verify/10 text-verify">✓ Passed</span>
                         </div>
                         <div className="text-xs text-ink-2">
                           {a.percentile}th percentile · issued{" "}
@@ -226,7 +233,7 @@ export default function ProfilePage() {
           ) : (
             <ul className="mt-4 divide-y divide-line">
               {(apps ?? []).map((a) => {
-                const job = JOBS.find((j) => j.id === a.jobId);
+                const job = jobs.find((j) => j.id === a.jobId);
                 if (!job) return null;
                 return (
                   <li key={a.id} className="flex items-center gap-4 py-3">
@@ -249,7 +256,7 @@ export default function ProfilePage() {
               {/* local-only fallback (logged-out demo applies) */}
               {apps !== null && apps.length === 0
                 ? progress.state.appliedJobs.map((jobId) => {
-                    const job = JOBS.find((j) => j.id === jobId);
+                      const job = jobs.find((j) => j.id === jobId);
                     if (!job) return null;
                     return (
                       <li key={jobId} className="flex items-center gap-4 py-3">
@@ -275,7 +282,7 @@ export default function ProfilePage() {
             <h2 className="text-lg font-bold">Saved Jobs</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {progress.state.savedJobs.map((jobId) => {
-                const job = JOBS.find((j) => j.id === jobId);
+                const job = jobs.find((j) => j.id === jobId);
                 if (!job) return null;
                 return (
                   <Link
@@ -292,8 +299,8 @@ export default function ProfilePage() {
         )}
 
         <p className="mt-6 text-center text-xs text-ink-3">
-          Roadmap checkmarks live in your browser (per account); test attempts and applications are
-          stored server-side — recruiters see your verified scores and live application stages.
+          Roadmap progress is a self-reported browser checklist. Assessment attempts and applications are
+          stored server-side; only passed MCQ scores are verified.
         </p>
       </main>
     </div>

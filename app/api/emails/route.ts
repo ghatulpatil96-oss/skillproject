@@ -25,7 +25,10 @@ export async function POST(req: Request) {
     type TemplateFn = (...args: never[]) => { kind: string; subject: string; title: string; bodyHtml: string; cta?: { label: string; url: string } };
     const tpl = (templates[body.template] as unknown as TemplateFn)(...((body.params ?? []) as never[]));
     const email = await sendEmail({ to: body.to, ...tpl });
-    return NextResponse.json({ email }, { status: 201 });
+    return NextResponse.json(
+      { email },
+      { status: email.status === "failed" ? 502 : 201 }
+    );
   } catch (err) {
     console.error("email error", err);
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 });

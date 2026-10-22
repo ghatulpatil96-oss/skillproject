@@ -16,6 +16,7 @@ function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const rawNext = params.get("next");
+  const passwordReset = params.get("passwordReset") === "success";
   const signupParams = new URLSearchParams();
   if (rawNext) signupParams.set("next", rawNext);
   if (rawNext === "/recruiter" || rawNext?.startsWith("/recruiter/")) {
@@ -81,6 +82,12 @@ function LoginInner() {
           <h1 className="text-2xl font-extrabold">Welcome back</h1>
           <p className="mt-1 text-sm text-ink-2">Log in to continue.</p>
 
+          {passwordReset && (
+            <p role="status" className="mt-4 rounded-lg bg-verify/10 px-3 py-2 text-sm text-verify">
+              Your password has been reset. You can now log in.
+            </p>
+          )}
+
           <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
             <div>
               <label className="label" htmlFor="email">Email</label>
@@ -88,7 +95,10 @@ function LoginInner() {
             </div>
             <div>
               <label className="label" htmlFor="password">Password</label>
-              <input id="password" type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              <input id="password" type="password" autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              <Link href="/forgot-password" className="mt-2 inline-block text-sm font-semibold text-accent hover:underline">
+                Forgot password?
+              </Link>
             </div>
             {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
             <button type="submit" disabled={busy} className="btn-primary w-full">

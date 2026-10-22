@@ -88,10 +88,30 @@ export async function POST(req: Request) {
     // welcome email (+ admin ping for recruiter verification). In production
     // without a mail provider the admin ping goes to the configured admin
     // address; the demo admin address only exists in demo mode.
-    void sendEmail({ to: user.email, ...templates.welcome(user.name, user.role) });
+    try {
+      const welcomeEmail = await sendEmail({
+        to: user.email,
+        ...templates.welcome(user.name, user.role),
+      });
+      if (welcomeEmail.status === "failed") {
+        console.error("[signup] Welcome email was not delivered.");
+      }
+    } catch {
+      console.error("[signup] Welcome email could not be recorded or sent.");
+    }
     if (user.role === "recruiter") {
       const adminTo = DEMO_MODE ? "admin@skillbridge.local" : (process.env.ADMIN_EMAIL ?? "admin@skillbridge.in");
-      void sendEmail({ to: adminTo, ...templates.adminNewRecruiter(user.company ?? user.name, user.email) });
+      try {
+        const adminEmail = await sendEmail({
+          to: adminTo,
+          ...templates.adminNewRecruiter(user.company ?? user.name, user.email),
+        });
+        if (adminEmail.status === "failed") {
+          console.error("[signup] Recruiter review email was not delivered.");
+        }
+      } catch {
+        console.error("[signup] Recruiter review email could not be recorded or sent.");
+      }
     }
 
     res.cookies.set(SESSION_COOKIE, token, {

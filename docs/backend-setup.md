@@ -1,8 +1,7 @@
 # Backend setup runbook — Neon (database) · Auth · Resend (email)
 
-This is the 15-minute path from the local JSON MVP to a real backend.
-Everything is already wired in code — you only add three environment
-variables and run one command.
+This is the setup path from the local JSON MVP to the production backend.
+Production requires Neon, Resend, and the site URL environment variables.
 
 ## How the backends switch
 
@@ -11,7 +10,7 @@ Every store (`lib/auth.ts`, `lib/store.ts`, `lib/email.ts`) checks
 
 | DATABASE_URL | users | attempts / applications / jobs | email outbox |
 |---|---|---|---|
-| **set** | Neon `users` table | Neon tables | `outbox` table |
+| **set** | Neon `users` table | Neon tables | Resend in production; `email_log` records each attempt |
 | empty | `.data/users.json` | `.data/*.json` | `.data/outbox.json` |
 
 Sessions do NOT depend on the database: they are HMAC-signed cookies
@@ -42,6 +41,11 @@ the user store in server layouts/routes.
 5. Restart the dev server. Done — every login, test attempt, application
    and job post now writes to Neon. `.data/` is left untouched as a backup.
 
+Before deploying account-security changes, open the Neon SQL Editor and run
+[`scripts/migrations/001_account_security_and_email.sql`](../scripts/migrations/001_account_security_and_email.sql).
+This adds the login-email preference, reset-token and password-rate-limit tables,
+and the email delivery log. Run it before deploying the matching application code.
+
 Verify: the Neon dashboard → **Tables** should show `users` with your
 accounts (including the demo ones). `npm run db:setup` is idempotent —
 safe to re-run any time.
@@ -68,26 +72,35 @@ get seeded.
 ## 3. Resend (email)
 
 1. Create an account at **https://resend.com** → **API Keys** → create one.
-2. Add to `.env.local`:
+2. Verify a sending domain in Resend for delivery to users other than your own
+   Resend account email.
+3. Configure the environment:
 
    ```
-   RESEND_API_KEY=re_xxxxxxxxxxxx
+   RESEND_API_KEY=<Resend API key>
+   EMAIL_FROM=SkillBridge <hello@yourdomain.in>
+   NEXT_PUBLIC_SITE_URL=https://yourdomain.in
    ```
 
-3. Restart. Every notification (welcome, test result, application updates,
-   recruiter verification) now **actually sends** — and is still recorded in
-   the outbox with `delivered: "resend"`.
+   Production fails clearly when `RESEND_API_KEY`, `EMAIL_FROM`, or
+   `NEXT_PUBLIC_SITE_URL` is missing. Production email links use the configured
+   site URL and never fall back to localhost.
 
-**Sender address:** until you verify a domain, Resend only delivers to the
-email you signed up with, from `onboarding@resend.dev` (the default
-`EMAIL_FROM`). For real users:
+**Sender format:** `Display Name <address@your-verified-domain.com>`, for
+example `SkillBridge <hello@yourdomain.in>`. `onboarding@resend.dev` is a
+Resend testing sender and only delivers to the email address on your own
+Resend account; other users will not receive messages from it.
 
-4. Resend dashboard → **Domains** → add your domain → paste the DNS records
-   it shows into your DNS provider → wait for verification.
-5. Set `EMAIL_FROM=SkillBridge <hello@yourdomain.in>` and redeploy.
+Run a delivery check without exposing the API key:
 
-Failed Resend calls are logged to the server console (status + body) and the
-email still lands in the outbox, so nothing is silently lost.
+```bash
+npm run email:test -- recipient@example.com
+```
+
+The script prints the Resend response ID or the provider error. Each send
+attempt is recorded in Neon `email_log` with its status, provider ID, and error.
+Production failures are not treated as success and are never routed to the
+development outbox.
 
 ---
 
@@ -96,6 +109,8 @@ email still lands in the outbox, so nothing is silently lost.
 - [ ] `DATABASE_URL` in `.env.local` → `npm run db:setup` → tables visible in Neon
 - [ ] `AUTH_SECRET` set in the production environment (≥32 chars)
 - [ ] `DEMO_MODE=false` in production
-- [ ] `RESEND_API_KEY` set; domain verified for real senders; `EMAIL_FROM` on your domain
+- [ ] Run `scripts/migrations/001_account_security_and_email.sql` on Neon before deploying
+- [ ] `RESEND_API_KEY` set; sending domain verified; `EMAIL_FROM` uses `Display Name <verified-address@domain>`
 - [ ] `NEXT_PUBLIC_SITE_URL=https://yourdomain` so email links point at production
+- [ ] `npm run email:test -- recipient@example.com` prints a Resend ID
 - [ ] Sign up a test account → row in Neon `users` → welcome email in Resend dashboard

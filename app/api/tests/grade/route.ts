@@ -140,7 +140,14 @@ export async function POST(req: Request) {
     // result email (verified attempts only — practice does not spam)
     if (!isPractice) {
       const tpl = templates.testResult(user.name, skill.name, score, percentile, passed);
-      void sendEmail({ to: user.email, ...tpl });
+      try {
+        const email = await sendEmail({ to: user.email, ...tpl });
+        if (email.status === "failed") {
+          console.error("[grade] Test result email was not delivered.");
+        }
+      } catch {
+        console.error("[grade] Test result email could not be recorded or sent.");
+      }
     }
 
     // ── response ──

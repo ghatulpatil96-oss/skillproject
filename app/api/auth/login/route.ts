@@ -9,6 +9,8 @@ import {
 } from "@/lib/auth";
 import { authRateLimit } from "@/lib/rate-limit";
 import { assertSameOrigin, readJson } from "@/lib/security";
+import { sendEmail, templates } from "@/lib/email";
+import { requestSecurityDetails } from "@/lib/request-metadata";
 
 export async function POST(req: Request) {
   try {
@@ -50,6 +52,19 @@ export async function POST(req: Request) {
       maxAge: SESSION_MAX_AGE,
       path: "/",
     });
+    if (found.emailLoginNotifications !== false) {
+      try {
+        const email = await sendEmail({
+          to: found.email,
+          ...templates.loginNotice(found.name, requestSecurityDetails(req)),
+        });
+        if (email.status === "failed") {
+          console.error("[login] Login notification email was not delivered.");
+        }
+      } catch {
+        console.error("[login] Login notification email could not be recorded or sent.");
+      }
+    }
     return res;
   } catch (err) {
     console.error("login error", err);

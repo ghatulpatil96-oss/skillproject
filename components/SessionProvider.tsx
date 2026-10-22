@@ -12,6 +12,7 @@ export type SessionUser = {
   gradYear?: number;
   company?: string;
   verifiedRecruiter?: boolean;
+  emailLoginNotifications?: boolean;
 };
 
 const SessionCtx = createContext<{

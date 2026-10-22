@@ -25,7 +25,7 @@ const scrypt = promisify(scryptCb) as (
   keylen: number
 ) => Promise<Buffer>;
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const DATA_DIR = process.env.SKILLBRIDGE_DATA_DIR ?? path.join(process.cwd(), ".data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 export const SESSION_COOKIE = "sb_session";
 
@@ -56,10 +56,12 @@ function resolveSecret(): string {
 
 const SECRET = resolveSecret();
 
-// Demo accounts (and demo seed data elsewhere) exist only outside
-// production, or when DEMO_MODE=true is explicitly set.
+// Demo accounts (and demo seed data elsewhere) exist only in local
+// development. PRODUCTION NEVER SEEDS DEMO USERS — irrespective of
+// any DEMO_MODE value baked into the environment. The purge script
+// (scripts/purge-demo-data.ts) removes any demo rows already in the DB.
 export const DEMO_MODE =
-  process.env.NODE_ENV !== "production" || process.env.DEMO_MODE === "true";
+  process.env.NODE_ENV !== "production" && process.env.DEMO_MODE !== "false";
 
 export type User = {
   id: string;
@@ -76,6 +78,7 @@ export type User = {
   verifiedRecruiter?: boolean;
   // bumped by disable scripts; > version in the token payload → session dead
   sessionVersion?: number;
+  emailLoginNotifications?: boolean;
 };
 
 export type SessionPayload = { userId: string; role: Role; exp: number; ver?: number }; // exp = epoch ms
@@ -169,6 +172,7 @@ type UserRow = {
   company: string | null;
   verified_recruiter: boolean | null;
   session_version: number | null;
+  email_login_notifications: boolean | null;
   created_at: Date | string;
 };
 
@@ -185,6 +189,7 @@ function mapUser(r: UserRow): User {
     company: r.company ?? undefined,
     verifiedRecruiter: r.verified_recruiter ?? undefined,
     sessionVersion: r.session_version ?? 0,
+    emailLoginNotifications: r.email_login_notifications ?? true,
   };
 }
 
@@ -309,6 +314,18 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
   return user;
 }
 
+export async function findUserById(id: string): Promise<User | undefined> {
+  let user: User | undefined;
+  if (hasDb()) {
+    const rows = await query<UserRow>(`select * from users where id = $1`, [id]);
+    user = rows[0] ? mapUser(rows[0]) : undefined;
+  } else {
+    user = (await readUsersJson()).find((candidate) => candidate.id === id);
+  }
+  if (user && !demoUserAllowed(user)) return undefined;
+  return user;
+}
+
 export async function createUser(input: {
   name: string;
   email: string;
@@ -333,15 +350,16 @@ export async function createUser(input: {
     company: input.company,
     verifiedRecruiter: input.role === "recruiter" ? false : undefined,
     sessionVersion: 0,
+    emailLoginNotifications: true,
   };
 
   if (hasDb()) {
     const rows = await query<UserRow>(
-      `insert into users (id, email, name, password_hash, role, grad_year, company, verified_recruiter, created_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
+      `insert into users (id, email, name, password_hash, role, grad_year, company, verified_recruiter, email_login_notifications, created_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning *`,
       [id, created.email, input.name, passwordHash, input.role,
        input.gradYear ?? null, input.company ?? null,
-       input.role === "recruiter" ? false : false, createdAt]
+       input.role === "recruiter" ? false : false, true, createdAt]
     );
     return mapUser(rows[0]);
   }
@@ -368,6 +386,64 @@ export async function setRecruiterVerified(userId: string, verified: boolean): P
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
   return user;
+}
+
+export async function setEmailLoginNotifications(userId: string, enabled: boolean): Promise<boolean> {
+  if (hasDb()) {
+    const rows = await query<{ id: string }>(
+      `update users set email_login_notifications = $2 where id = $1 returning id`,
+      [userId, enabled]
+    );
+    return rows.length > 0;
+  }
+  const users = await readUsersJson();
+  const user = users.find((candidate) => candidate.id === userId);
+  if (!user) return false;
+  user.emailLoginNotifications = enabled;
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
+  return true;
+}
+
+export async function updatePasswordAndIncrementSession(
+  userId: string,
+  passwordHash: string
+): Promise<number | undefined> {
+  if (hasDb()) {
+    const rows = await query<{ session_version: number }>(
+      `update users
+       set password_hash = $2, session_version = session_version + 1
+       where id = $1
+       returning session_version`,
+      [userId, passwordHash]
+    );
+    return rows[0]?.session_version;
+  }
+  const users = await readUsersJson();
+  const user = users.find((candidate) => candidate.id === userId);
+  if (!user) return undefined;
+  user.passwordHash = passwordHash;
+  user.sessionVersion = (user.sessionVersion ?? 0) + 1;
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
+  return user.sessionVersion;
+}
+
+export async function incrementSessionVersion(userId: string): Promise<number | undefined> {
+  if (hasDb()) {
+    const rows = await query<{ session_version: number }>(
+      `update users set session_version = session_version + 1 where id = $1 returning session_version`,
+      [userId]
+    );
+    return rows[0]?.session_version;
+  }
+  const users = await readUsersJson();
+  const user = users.find((candidate) => candidate.id === userId);
+  if (!user) return undefined;
+  user.sessionVersion = (user.sessionVersion ?? 0) + 1;
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
+  return user.sessionVersion;
 }
 
 export async function recruitersWithStatus(): Promise<User[]> {
