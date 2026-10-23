@@ -7,6 +7,7 @@ import { lessonByTopicId, type Lesson } from "@/lib/lessons";
 import { loadLessonMdx } from "@/lib/lesson-mdx";
 import TopicComplete from "@/components/mdx/TopicComplete";
 import MDXRenderer from "@/components/mdx/MDXRenderer";
+import Quiz from "@/components/mdx/Quiz";
 
 export default async function LessonPage({
   params,
@@ -167,6 +168,7 @@ function LessonFallback({ lesson }: { lesson: Lesson }) {
           ))}
         </div>
       </section>
+      {lesson.questions && <Quiz questions={lesson.questions} title="Check yourself" />}
       {lesson.pitfalls && lesson.pitfalls.length > 0 && (
         <section className="mt-8">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">Common mistakes interviewers spot</h2>

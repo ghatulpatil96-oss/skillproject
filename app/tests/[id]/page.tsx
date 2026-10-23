@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import TopBar from "@/components/TopBar";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { skillById } from "@/lib/data";
+import { skillById, TESTS } from "@/lib/data";
 
 type Phase = "intro" | "loading" | "running" | "grading" | "done";
 
@@ -14,6 +14,7 @@ type ReviewItem = { index: number; text: string; ok: boolean; correctIndex?: num
 export default function TestPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const skill = skillById(id);
+  const testConfig = TESTS.find((test) => test.skillId === id);
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [questions, setQuestions] = useState<ApiQuestion[]>([]);
@@ -137,11 +138,11 @@ export default function TestPage({ params }: { params: { id: string } }) {
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-tile font-display text-2xl font-bold text-accent">
               {skill.name.slice(0, 1)}
             </span>
-            <h1 className="mt-4 text-2xl font-extrabold">{skill.name} — Verified Test</h1>
+            <h1 className="mt-4 text-2xl font-extrabold">{skill.name} Assessment</h1>
             <p className="mx-auto mt-2 max-w-md text-sm text-ink-2">
-              Timed questions · passing score 70.
-              Graded on our server — answers are never sent to your browser.
-              Your best verified score appears on your profile for recruiters.
+              Timed MCQs are graded on our server.
+              {testConfig && testConfig.codeCount > 0 && " The coding prompt is practice-only and is not scored."}
+              {" "}Pass with 70+ on the MCQs to add the assessment to your profile and later job applications.
             </p>
             <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm text-ink-2">
               <li>The timer starts when you click start and auto-submits at zero.</li>

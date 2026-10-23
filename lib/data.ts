@@ -61,6 +61,8 @@ export const SKILLS: Skill[] = [
   { id: "git", name: "Git & GitHub", emoji: "🔀" },
   { id: "java", name: "Java", emoji: "☕" },
   { id: "testing", name: "Testing & QA", emoji: "🧪" },
+  { id: "fullstack", name: "Full Stack Development", emoji: "🧩" },
+  { id: "devops", name: "DevOps", emoji: "🚀" },
 ];
 
 export const ROADMAPS: Roadmap[] = [
@@ -238,6 +240,158 @@ export const ROADMAPS: Roadmap[] = [
       },
     ],
   },
+  {
+    id: "fullstack-dev",
+    title: "Full Stack Developer",
+    emoji: "🧩",
+    tagline: "Build complete web products from accessible interfaces to reliable APIs",
+    targetRole: "Full Stack Developer",
+    skills: ["fullstack"],
+    capstone: "Build and deploy a full-stack application with authentication, persistence, tests, and a responsive interface",
+    totalHours: 160,
+    stages: [
+      {
+        id: "fs-foundations",
+        name: "Web Foundations",
+        topics: [
+          { id: "fs-t1", title: "Semantic HTML, accessibility & forms", hours: 18, resource: "MDN: HTML" },
+          { id: "fs-t2", title: "CSS layout, responsive design & browser tools", hours: 18, resource: "web.dev: Learn CSS" },
+          { id: "fs-t3", title: "JavaScript, TypeScript & Git foundations", hours: 14, resource: "MDN: JavaScript" },
+        ],
+      },
+      {
+        id: "fs-product",
+        name: "Frontend & Backend",
+        topics: [
+          { id: "fs-t4", title: "React components, state & data fetching", hours: 22, resource: "React: Learn" },
+          { id: "fs-t5", title: "HTTP APIs, Node.js & validation", hours: 22, resource: "Node.js: Learn" },
+          { id: "fs-t6", title: "SQL, PostgreSQL & data modeling", hours: 18, resource: "PostgreSQL: Tutorial" },
+        ],
+      },
+      {
+        id: "fs-jobready",
+        name: "Job-Ready",
+        topics: [
+          { id: "fs-t7", title: "Authentication, testing & application security", hours: 24, resource: "OWASP: Cheat Sheet Series" },
+          { id: "fs-t8", title: "Deployment, observability & portfolio capstone", hours: 24, resource: "Vercel: Documentation" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "python-dev",
+    title: "Python Developer",
+    emoji: "🐍",
+    tagline: "Move from Python fundamentals to tested, production-ready services",
+    targetRole: "Python Developer",
+    skills: ["python"],
+    capstone: "Build a tested Python API backed by PostgreSQL and deploy it with clear operational documentation",
+    totalHours: 160,
+    stages: [
+      {
+        id: "py-foundations",
+        name: "Python Foundations",
+        topics: [
+          { id: "py-t1", title: "Python syntax, values & control flow", hours: 18, resource: "Python: Tutorial" },
+          { id: "py-t2", title: "Functions, modules & virtual environments", hours: 16, resource: "Python: Tutorial" },
+          { id: "py-t3", title: "Collections, files & exceptions", hours: 18, resource: "Python: Library Reference" },
+        ],
+      },
+      {
+        id: "py-core",
+        name: "Application Development",
+        topics: [
+          { id: "py-t4", title: "Object-oriented Python & typing", hours: 20, resource: "Python: typing documentation" },
+          { id: "py-t5", title: "HTTP APIs with FastAPI", hours: 22, resource: "FastAPI: Tutorial" },
+          { id: "py-t6", title: "SQL, PostgreSQL & data access", hours: 18, resource: "PostgreSQL: Tutorial" },
+        ],
+      },
+      {
+        id: "py-jobready",
+        name: "Job-Ready",
+        topics: [
+          { id: "py-t7", title: "Testing, packaging & maintainable code", hours: 24, resource: "pytest: Documentation" },
+          { id: "py-t8", title: "Concurrency, deployment & interview practice", hours: 24, resource: "Python: asyncio documentation" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "java-dev",
+    title: "Java Developer",
+    emoji: "☕",
+    tagline: "Learn modern Java, build dependable services, and prepare for production",
+    targetRole: "Java Developer",
+    skills: ["java"],
+    capstone: "Create a tested Spring Boot service with persistence, API documentation, and a deployable build",
+    totalHours: 168,
+    stages: [
+      {
+        id: "java-foundations",
+        name: "Java Foundations",
+        topics: [
+          { id: "java-t1", title: "Java syntax, types & control flow", hours: 18, resource: "dev.java: Learn Java" },
+          { id: "java-t2", title: "Classes, objects & encapsulation", hours: 18, resource: "dev.java: Classes and Objects" },
+          { id: "java-t3", title: "Collections, generics & exceptions", hours: 18, resource: "Java SE: Documentation" },
+        ],
+      },
+      {
+        id: "java-core",
+        name: "Application Development",
+        topics: [
+          { id: "java-t4", title: "Streams, lambdas & modern Java", hours: 22, resource: "dev.java: Streams" },
+          { id: "java-t5", title: "Maven, testing & project structure", hours: 22, resource: "Maven: Getting Started" },
+          { id: "java-t6", title: "Spring Boot REST APIs & validation", hours: 22, resource: "Spring Boot: Reference" },
+        ],
+      },
+      {
+        id: "java-jobready",
+        name: "Job-Ready",
+        topics: [
+          { id: "java-t7", title: "Persistence, transactions & security", hours: 24, resource: "Spring Data JPA: Reference" },
+          { id: "java-t8", title: "JVM operations, deployment & interview practice", hours: 24, resource: "Oracle: Java Platform Documentation" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "devops-engineer",
+    title: "DevOps Engineer",
+    emoji: "🚀",
+    tagline: "Automate delivery and operate secure, observable infrastructure",
+    targetRole: "DevOps Engineer",
+    skills: ["devops"],
+    capstone: "Build a CI/CD pipeline that deploys a containerized service with infrastructure as code and monitoring",
+    totalHours: 176,
+    stages: [
+      {
+        id: "ops-foundations",
+        name: "Systems Foundations",
+        topics: [
+          { id: "ops-t1", title: "Linux shell, processes & permissions", hours: 20, resource: "Ubuntu: Command line for beginners" },
+          { id: "ops-t2", title: "Networking, DNS, HTTP & TLS", hours: 18, resource: "Cloudflare: Learning Center" },
+          { id: "ops-t3", title: "Git workflows, scripting & configuration", hours: 20, resource: "Pro Git: Book" },
+        ],
+      },
+      {
+        id: "ops-core",
+        name: "Automation & Platforms",
+        topics: [
+          { id: "ops-t4", title: "Containers with Docker", hours: 22, resource: "Docker: Get Started" },
+          { id: "ops-t5", title: "CI/CD pipelines with GitHub Actions", hours: 22, resource: "GitHub Actions: Documentation" },
+          { id: "ops-t6", title: "Cloud fundamentals & infrastructure as code", hours: 22, resource: "Terraform: Tutorials" },
+        ],
+      },
+      {
+        id: "ops-jobready",
+        name: "Job-Ready",
+        topics: [
+          { id: "ops-t7", title: "Kubernetes, rollout & recovery strategies", hours: 26, resource: "Kubernetes: Tutorials" },
+          { id: "ops-t8", title: "Observability, incident response & security", hours: 26, resource: "Prometheus: Overview" },
+        ],
+      },
+    ],
+  },
 ];
 
 // Question bank moved to lib/server/questions.ts (import "server-only"):
@@ -246,6 +400,10 @@ export const ROADMAPS: Roadmap[] = [
 export const TESTS = [
   { id: "javascript", skillId: "javascript", durationMin: 20, mcqCount: 5, codeCount: 1, passingScore: 70 },
   { id: "sql", skillId: "sql", durationMin: 20, mcqCount: 5, codeCount: 1, passingScore: 70 },
+  { id: "fullstack", skillId: "fullstack", durationMin: 60, mcqCount: 15, codeCount: 0, passingScore: 70 },
+  { id: "python", skillId: "python", durationMin: 60, mcqCount: 15, codeCount: 0, passingScore: 70 },
+  { id: "java", skillId: "java", durationMin: 60, mcqCount: 15, codeCount: 0, passingScore: 70 },
+  { id: "devops", skillId: "devops", durationMin: 60, mcqCount: 15, codeCount: 0, passingScore: 70 },
 ] as const;
 
 // ── Jobs (recruiter-posted) ──

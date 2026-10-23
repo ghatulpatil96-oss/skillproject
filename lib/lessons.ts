@@ -4,6 +4,7 @@
 // the same trust policy as trending skills: official docs,
 // recognized education platforms, accredited courses only.
 // ─────────────────────────────────────────────────────────────
+import { ADDITIONAL_LESSONS } from "@/lib/additional-lessons";
 
 export type LessonResource = {
   title: string;
@@ -28,6 +29,13 @@ export type Lesson = {
   resources: LessonResource[];
   /** common mistakes to avoid (interviewers notice these) */
   pitfalls?: string[];
+  /** Interactive self-check questions, matching the authored MDX quiz format. */
+  questions?: {
+    q: string;
+    options: string[];
+    answer: number;
+    why: string;
+  }[];
 };
 
 const MDN = "https://developer.mozilla.org";
@@ -1032,6 +1040,8 @@ export const LESSONS: Lesson[] = [
     ],
   },
 ];
+
+LESSONS.push(...ADDITIONAL_LESSONS);
 
 /** All lessons for one roadmap, keyed by topic id. */
 export function lessonsForRoadmap(topicIds: string[]): Map<string, Lesson> {
