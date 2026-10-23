@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserFromToken, SESSION_COOKIE, type User } from "@/lib/auth";
+import { getUserFromToken, isDemoUserId, SESSION_COOKIE, type User } from "@/lib/auth";
 import { JOBS } from "@/lib/data";
 import {
   addApplication,
