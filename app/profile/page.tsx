@@ -135,7 +135,22 @@ export default function ProfilePage() {
           )}
         </section>
 
-        {user && <LoginEmailPreference />}
+        {user && (
+          <>
+            <LoginEmailPreference />
+            <section className="card mt-6 flex flex-wrap items-center justify-between gap-4 p-6">
+              <div>
+                <h2 className="text-lg font-bold">Account security</h2>
+                <p className="mt-1 text-sm text-ink-2">
+                  Change your password or log out of all devices.
+                </p>
+              </div>
+              <Link href="/account/security" className="btn-primary h-10 px-4">
+                Manage security
+              </Link>
+            </section>
+          </>
+        )}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           {/* ── verified scorecards (server attempts) ── */}
