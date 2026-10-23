@@ -114,6 +114,10 @@ export async function GET(req: Request) {
     const wanted = jobId ? ids.filter((id) => id === jobId) : ids;
     const all = (await Promise.all(wanted.map((id) => applicationsForJob(id))))
       .flat()
+      .filter((application) =>
+        !isDemoUserId(application.studentId) &&
+        !application.studentEmail.trim().toLowerCase().endsWith("@skillbridge.local")
+      )
       .map(toRecruiterView); // drops college in every response
     return NextResponse.json({ applications: all });
   }
