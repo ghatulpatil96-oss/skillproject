@@ -20,6 +20,7 @@ const NEXT_STAGES = ["shortlisted", "challenge", "interview", "offer", "rejected
 type Application = {
   id: string;
   jobId: string;
+  studentId: string;
   studentName: string;
   studentEmail: string;
   college?: string;
@@ -81,7 +82,11 @@ export default function RecruiterDashboard() {
     void load(); // re-fetch so the board reflects the DB
   }
 
-  const activeApps = apps ?? [];
+  const activeApps = (apps ?? []).filter((application) =>
+    !application.studentId.startsWith("u_demo_") &&
+    !application.studentEmail.trim().toLowerCase().endsWith("@skillbridge.local") &&
+    application.studentEmail.trim().toLowerCase() !== "ananya@student.in"
+  );
   const shortlistedCount = activeApps.filter((a) => a.stage === "shortlisted").length;
 
   async function removePost(id: string) {

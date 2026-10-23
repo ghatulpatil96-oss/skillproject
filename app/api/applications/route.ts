@@ -116,7 +116,8 @@ export async function GET(req: Request) {
       .flat()
       .filter((application) =>
         !isDemoUserId(application.studentId) &&
-        !application.studentEmail.trim().toLowerCase().endsWith("@skillbridge.local")
+        !application.studentEmail.trim().toLowerCase().endsWith("@skillbridge.local") &&
+        application.studentEmail.trim().toLowerCase() !== "ananya@student.in"
       )
       .map(toRecruiterView); // drops college in every response
     return NextResponse.json({ applications: all });

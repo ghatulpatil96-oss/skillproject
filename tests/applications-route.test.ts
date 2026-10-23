@@ -62,6 +62,13 @@ describe("recruiter applications API", () => {
         studentEmail: "test@skillbridge.local",
         studentName: "Legacy Demo Student",
       },
+      {
+        id: "ap_renamed_demo",
+        jobId: "pj_owned",
+        studentId: "u_renamed_student",
+        studentEmail: "ananya@student.in",
+        studentName: "Ananya Sharma",
+      },
     ]);
   });
 
